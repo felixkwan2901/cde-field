@@ -1,119 +1,136 @@
-import { ChevronRight } from 'lucide-react'
-import JobMap from '../components/JobMap'
+import { ChevronRight, FileText } from 'lucide-react'
 import ProgressRing from '../components/ProgressRing'
 import { SkeletonRows } from '../components/EmptyState'
+import { crewActivity, lastTouched } from '../lib/crewActivity'
 import { jobProgress, progressCaption } from '../lib/progress'
-import { relativeTime } from '../lib/format'
+import { relativeTime, initials } from '../lib/format'
 
-// The manager's question is not the worker's. It is "where has nothing
-// happened", so the list is sorted by least-recently-touched rather than by
-// job number or size — the neglected jobs sort to the top instead of being
-// buried in the middle of an alphabetical list. A job nobody has recorded
-// anything against at all sorts first of all, because that is the strongest
-// version of the same signal.
-function lastTouched(job) {
-  const times = (job.tasks ?? []).map((t) => t.updatedAt).filter(Boolean)
-  return times.length ? Math.max(...times.map((t) => new Date(t).getTime())) : null
-}
-
-// Who is actually using this. Built from the attributions on the tasks
-// themselves rather than from a separate activity log: the record already
-// says who set each percentage and when, so a second source would only be
-// something else to disagree.
-function crewActivity(jobs) {
-  const people = new Map()
-  for (const job of jobs) {
-    for (const task of job.tasks ?? []) {
-      if (!task.updatedBy || !task.updatedAt) continue
-      const at = new Date(task.updatedAt).getTime()
-      const seen = people.get(task.updatedBy)
-      if (!seen || at > seen.at) {
-        people.set(task.updatedBy, { at, task: task.name, job: job.jobName })
-      }
-    }
-  }
-  return [...people.entries()]
-    .map(([name, last]) => ({ name, ...last }))
-    .sort((a, b) => b.at - a.at)
-}
-
-export default function ManagerScreen({ jobs, loading, onOpenJob }) {
+// The office's view, and it leads with people rather than jobs.
+//
+// A manager is not running a job — they are asking who is out there, what
+// each of them has actually recorded, and what has gone quiet. Jobs are the
+// second question, so they sit below.
+//
+// No map here. Knowing where a site is matters when you are driving to it;
+// from a desk the useful thing is the list.
+export default function ManagerScreen({ jobs, roster, loading, onOpenJob, onOpenReport }) {
   if (loading) return <SkeletonRows count={4} />
 
-  const ordered = [...jobs].sort((a, b) => {
-    const at = lastTouched(a)
-    const bt = lastTouched(b)
-    if (at === bt) return 0
-    if (at === null) return -1
-    if (bt === null) return 1
-    return at - bt
-  })
-  const crew = crewActivity(jobs)
+  const crew = crewActivity(jobs, roster)
+  const active = crew.filter((p) => p.last)
+  const quiet = jobs.filter((j) => !lastTouched(j))
 
   return (
     <>
-      <JobMap jobs={jobs} onOpenJob={onOpenJob} />
+      <div className="card mb-5 p-4">
+        <div className="grid grid-cols-3 gap-2 text-center">
+          <Figure value={`${active.length}/${crew.length}`} label="Crew recording" />
+          <Figure value={jobs.length - quiet.length} label="Jobs moving" />
+          <Figure value={quiet.length} label="Nothing recorded" tone={quiet.length ? 'warn' : undefined} />
+        </div>
+        <button
+          onClick={onOpenReport}
+          className="tap pressable mt-4 flex w-full items-center justify-center gap-2 rounded-[var(--radius-control)] bg-[color:var(--surface-2)] text-[15px]"
+        >
+          <FileText size={17} aria-hidden="true" />
+          Meeting report
+        </button>
+      </div>
 
-      <h2 className="mb-2 mt-6 text-[12px] font-semibold uppercase tracking-wide text-[color:var(--text-muted)]">
-        Least recently updated
+      <h2 className="mb-2 text-[12px] font-semibold uppercase tracking-wide text-[color:var(--text-muted)]">
+        Crew
       </h2>
-      <ul className="flex flex-col gap-2">
-        {ordered.map((job) => {
-          const progress = jobProgress(job.tasks)
-          const touched = lastTouched(job)
-          return (
-            <li key={job.id}>
-              <button
-                onClick={() => onOpenJob(job.id)}
-                className="card pressable flex w-full items-center gap-3 p-3 text-left"
-              >
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-[16px] font-medium">
-                    <span className="text-[color:var(--text-muted)]">{job.jobNumber}</span> {job.jobName}
-                  </p>
+      <ul className="card mb-6 overflow-hidden">
+        {crew.map((person) => (
+          <li
+            key={person.name}
+            className="flex items-center gap-3 border-b border-[color:var(--border)] px-4 py-3.5 last:border-b-0"
+          >
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[color:var(--surface-2)] text-[13px] font-medium">
+              {initials(person.name)}
+            </span>
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-[15px] font-medium">{person.name}</p>
+              {person.last ? (
+                <>
                   <p className="truncate text-[13px] text-[color:var(--text-secondary)]">
-                    {progressCaption(progress)}
+                    {person.last.task} · {person.last.job}
                   </p>
-                  <p className="truncate text-[13px]">
-                    {touched ? (
-                      <span className="text-[color:var(--text-muted)]">
-                        Last update {relativeTime(new Date(touched).toISOString())}
-                      </span>
-                    ) : (
-                      <span className="text-[color:var(--status-warning)]">Nothing recorded yet</span>
-                    )}
+                  <p className="text-[12px] text-[color:var(--text-muted)]">
+                    {relativeTime(new Date(person.last.at).toISOString())} ·{' '}
+                    {person.updates} update{person.updates === 1 ? '' : 's'} across{' '}
+                    {person.jobs.length} job{person.jobs.length === 1 ? '' : 's'}
                   </p>
-                </div>
-                <ProgressRing progress={progress} size={54} stroke={6} />
-                <ChevronRight size={20} className="shrink-0 text-[color:var(--text-muted)]" aria-hidden="true" />
-              </button>
-            </li>
-          )
-        })}
+                </>
+              ) : (
+                <p className="text-[13px] text-[color:var(--text-muted)]">No activity yet</p>
+              )}
+            </div>
+          </li>
+        ))}
       </ul>
 
-      <h2 className="mb-2 mt-7 text-[12px] font-semibold uppercase tracking-wide text-[color:var(--text-muted)]">
-        Crew activity
+      <h2 className="mb-2 text-[12px] font-semibold uppercase tracking-wide text-[color:var(--text-muted)]">
+        Jobs, least recently updated
       </h2>
-      {crew.length === 0 ? (
-        <p className="card px-4 py-3 text-[13px] text-[color:var(--text-secondary)]">
-          Nobody has recorded anything yet.
-        </p>
-      ) : (
-        <ul className="card overflow-hidden">
-          {crew.map((person) => (
-            <li key={person.name} className="border-b border-[color:var(--border)] px-4 py-3.5 last:border-b-0">
-              <p className="text-[15px] font-medium">{person.name}</p>
-              <p className="truncate text-[13px] text-[color:var(--text-secondary)]">
-                {person.task} · {person.job}
-              </p>
-              <p className="text-[12px] text-[color:var(--text-muted)]">
-                {relativeTime(new Date(person.at).toISOString())}
-              </p>
-            </li>
-          ))}
-        </ul>
-      )}
+      <ul className="flex flex-col gap-2">
+        {[...jobs]
+          .sort((a, b) => {
+            const at = lastTouched(a)
+            const bt = lastTouched(b)
+            if (at === bt) return 0
+            if (at === null) return -1
+            if (bt === null) return 1
+            return at - bt
+          })
+          .map((job) => {
+            const progress = jobProgress(job.tasks)
+            const touched = lastTouched(job)
+            return (
+              <li key={job.id}>
+                <button
+                  onClick={() => onOpenJob(job.id)}
+                  className="card pressable flex w-full items-center gap-3 p-3 text-left"
+                >
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-[16px] font-medium">
+                      <span className="text-[color:var(--text-muted)]">{job.jobNumber}</span>{' '}
+                      {job.jobName}
+                    </p>
+                    <p className="truncate text-[13px] text-[color:var(--text-secondary)]">
+                      {progressCaption(progress)}
+                    </p>
+                    <p className="truncate text-[13px]">
+                      {touched ? (
+                        <span className="text-[color:var(--text-muted)]">
+                          Last update {relativeTime(new Date(touched).toISOString())}
+                        </span>
+                      ) : (
+                        <span className="text-[color:var(--status-warning)]">Nothing recorded yet</span>
+                      )}
+                    </p>
+                  </div>
+                  <ProgressRing progress={progress} size={54} stroke={6} />
+                  <ChevronRight size={20} className="shrink-0 text-[color:var(--text-muted)]" aria-hidden="true" />
+                </button>
+              </li>
+            )
+          })}
+      </ul>
     </>
+  )
+}
+
+function Figure({ value, label, tone }) {
+  return (
+    <div>
+      <p
+        className="text-[24px] font-semibold tabular-nums"
+        style={tone === 'warn' ? { color: 'var(--status-warning)' } : undefined}
+      >
+        {value}
+      </p>
+      <p className="text-[12px] leading-tight text-[color:var(--text-secondary)]">{label}</p>
+    </div>
   )
 }

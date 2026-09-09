@@ -6,6 +6,7 @@ import { SkeletonRows } from './components/EmptyState'
 import RoleScreen from './screens/RoleScreen'
 import StaffPickerScreen from './screens/StaffPickerScreen'
 import ManagerScreen from './screens/ManagerScreen'
+import ReportScreen from './screens/ReportScreen'
 import TodayScreen from './screens/TodayScreen'
 import JobTasksScreen from './screens/JobTasksScreen'
 import TaskDetailScreen from './screens/TaskDetailScreen'
@@ -165,11 +166,18 @@ export default function App() {
   const body = () => {
     if (view.name === 'today') {
       return role === 'manager' ? (
-        <ManagerScreen jobs={jobs} loading={jobsLoading} onOpenJob={openJob} />
+        <ManagerScreen
+          jobs={jobs}
+          roster={roster}
+          loading={jobsLoading}
+          onOpenJob={openJob}
+          onOpenReport={() => setView({ name: 'report' })}
+        />
       ) : (
         <TodayScreen jobs={jobs} loading={jobsLoading} onOpenJob={openJob} />
       )
     }
+    if (view.name === 'report') return <ReportScreen jobs={jobs} roster={roster} />
     if (!job) return <SkeletonRows />
     if (view.name === 'job') {
       return (
@@ -205,12 +213,14 @@ export default function App() {
         : { title: 'Today', subtitle: staff.name },
     job: { title: job ? `${job.jobNumber} ${job.jobName}` : 'Job' },
     info: { title: 'Job info', subtitle: job?.jobName },
+    report: { title: 'Meeting report', subtitle: 'Field progress' },
     task: { title: job ? job.jobName : 'Task' },
   }
   const back = {
     today: null,
     job: () => setView({ name: 'today' }),
     info: () => setView({ name: 'job', jobId: view.jobId }),
+    report: () => setView({ name: 'today' }),
     task: () => setView({ name: 'job', jobId: view.jobId }),
   }[view.name]
 

@@ -162,3 +162,90 @@ button {
   font: inherit;
   color: inherit;
 }
+
+/* ---------- meeting report ---------- */
+
+.report-heading {
+  margin: 1.5rem 0 0.5rem;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.report-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.report-table th {
+  text-align: left;
+  font-weight: 500;
+  color: var(--text-secondary);
+  padding: 6px 8px 6px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.report-table td {
+  padding: 7px 8px 7px 0;
+  border-bottom: 1px solid var(--border);
+  vertical-align: top;
+}
+
+.report-table .num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* Gaps between columns, not just after them. Right-aligned numeric cells had
+   padding only on the right, so a figure ran straight into the text of the
+   next column — "9/15" and "47 min ago" read as one string. */
+.report-table th + th,
+.report-table td + td {
+  padding-left: 14px;
+}
+
+.report-table th:last-child,
+.report-table td:last-child {
+  padding-right: 0;
+}
+
+/* Paper is white and ink is black whichever theme the screen was in — a dark
+   theme printed as-is wastes a cartridge and comes out unreadable. */
+@media print {
+  .no-print,
+  header {
+    display: none !important;
+  }
+
+  :root,
+  :root[data-theme='dark'] {
+    --surface-1: #ffffff;
+    --surface-2: #ffffff;
+    --page-plane: #ffffff;
+    --text-primary: #000000;
+    --text-secondary: #333333;
+    --text-muted: #666666;
+    --border: #cccccc;
+  }
+
+  body {
+    background: #ffffff;
+  }
+
+  .report {
+    padding: 0;
+  }
+
+  .report-table {
+    font-size: 11px;
+  }
+
+  /* A row split across a page break is a row nobody reads. */
+  .report-table tr {
+    break-inside: avoid;
+  }
+}
