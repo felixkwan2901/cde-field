@@ -76,14 +76,14 @@ export default function JobMap({ jobs, onOpenJob, height = 220 }) {
 
   if (placeable.length === 0) {
     return (
-      <div className="rounded-2xl border border-[color:var(--border)] bg-[color:var(--surface-2)] px-4 py-5 text-center text-[13px] text-[color:var(--text-secondary)]">
+      <div className="card px-4 py-5 text-center text-[13px] text-[color:var(--text-secondary)]">
         No sites to map yet — jobs need an address before they can be placed.
       </div>
     )
   }
 
   return (
-    <div className="overflow-hidden rounded-2xl border border-[color:var(--border)]">
+    <div className="card overflow-hidden">
       <div ref={holder} style={{ height }} aria-label="Map of job sites" role="img" />
     </div>
   )

@@ -45,12 +45,16 @@ export default function PercentChips({ value, onChange, disabled = false }) {
             onClick={() => onChange(option)}
             // The last chip spans the empty column in the 3+2 layout so the
             // row doesn't end ragged.
-            className={`tap flex h-16 items-center justify-center rounded-xl border text-[19px] font-medium transition-colors disabled:opacity-40 ${
+            className={`tap pressable flex h-16 items-center justify-center rounded-[var(--radius-control)] text-[19px] font-medium disabled:opacity-40 ${
               i === 4 ? 'col-span-1 max-[359px]:col-span-3' : ''
             } ${
+              // Selected is a solid fill, not an outline: a filled block is
+              // the only thing that reliably survives a sun-washed screen,
+              // and it is legible in greyscale, which an accent border is
+              // not.
               selected
-                ? 'border-transparent bg-[color:var(--brand-green)] text-[color:var(--brand-green-ink)]'
-                : 'border-[color:var(--border)] bg-[color:var(--surface-1)] text-[color:var(--text-primary)]'
+                ? 'bg-[color:var(--brand-green)] text-[color:var(--brand-green-ink)] shadow-[0_2px_10px_-2px_rgba(23,134,74,0.5)]'
+                : 'card text-[color:var(--text-primary)]'
             }`}
           >
             {option}

@@ -9,7 +9,7 @@ export default function TodayScreen({ jobs, loading, onOpenJob }) {
 
   return (
     <>
-      <div className="mb-5 flex items-center gap-4 rounded-2xl bg-[color:var(--surface-1)] p-4">
+      <div className="card mb-5 flex items-center gap-4 p-4">
         <ProgressRing progress={day} size={96} />
         <div className="min-w-0">
           <p className="text-[15px] font-medium">{today()}</p>
@@ -34,7 +34,7 @@ export default function TodayScreen({ jobs, loading, onOpenJob }) {
               <li key={job.id}>
                 <button
                   onClick={() => onOpenJob(job.id)}
-                  className="flex w-full items-center gap-3 rounded-2xl border border-[color:var(--border)] bg-[color:var(--surface-1)] p-3 text-left"
+                  className="card pressable flex w-full items-center gap-3 p-3 text-left"
                 >
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-[16px] font-medium">

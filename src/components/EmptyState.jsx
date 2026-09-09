@@ -14,7 +14,7 @@ export function SkeletonRows({ count = 3 }) {
   return (
     <div className="flex flex-col gap-2">
       {Array.from({ length: count }, (_, i) => (
-        <div key={i} className="h-[72px] animate-pulse rounded-2xl bg-[color:var(--surface-2)]" />
+        <div key={i} className="h-[76px] animate-pulse rounded-[var(--radius-card)] bg-[color:var(--surface-2)]" />
       ))}
     </div>
   )

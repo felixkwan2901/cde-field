@@ -65,7 +65,7 @@ export default function ManagerScreen({ jobs, loading, onOpenJob }) {
             <li key={job.id}>
               <button
                 onClick={() => onOpenJob(job.id)}
-                className="flex w-full items-center gap-3 rounded-2xl border border-[color:var(--border)] bg-[color:var(--surface-1)] p-3 text-left"
+                className="card pressable flex w-full items-center gap-3 p-3 text-left"
               >
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-[16px] font-medium">
@@ -96,13 +96,13 @@ export default function ManagerScreen({ jobs, loading, onOpenJob }) {
         Crew activity
       </h2>
       {crew.length === 0 ? (
-        <p className="rounded-2xl bg-[color:var(--surface-2)] px-4 py-3 text-[13px] text-[color:var(--text-secondary)]">
+        <p className="card px-4 py-3 text-[13px] text-[color:var(--text-secondary)]">
           Nobody has recorded anything yet.
         </p>
       ) : (
-        <ul className="overflow-hidden rounded-2xl border border-[color:var(--border)] bg-[color:var(--surface-1)]">
+        <ul className="card overflow-hidden">
           {crew.map((person) => (
-            <li key={person.name} className="border-b border-[color:var(--border)] px-4 py-3 last:border-b-0">
+            <li key={person.name} className="border-b border-[color:var(--border)] px-4 py-3.5 last:border-b-0">
               <p className="text-[15px] font-medium">{person.name}</p>
               <p className="truncate text-[13px] text-[color:var(--text-secondary)]">
                 {person.task} · {person.job}

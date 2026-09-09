@@ -1,5 +1,7 @@
 import { Camera, StickyNote } from 'lucide-react'
 import PercentChips from '../components/PercentChips'
+import ProgressRing from '../components/ProgressRing'
+import TaskStatus from '../components/TaskStatus'
 import { relativeTime } from '../lib/format'
 
 // The screen the demo lives or dies on. Top to bottom: what it is, what it
@@ -13,14 +15,33 @@ export default function TaskDetailScreen({ task, position, total, onSetPercent, 
       </p>
       <h2 className="mt-1 text-[22px] font-semibold leading-snug">{task.name}</h2>
 
-      <div className="my-7 text-center">
-        <p className="text-[56px] font-semibold leading-none tabular-nums">
-          {task.na ? <span className="text-[28px] text-[color:var(--text-muted)]">Not applicable</span>
-            : typeof task.pct === 'number' ? `${task.pct}%`
-            : <span className="text-[color:var(--text-muted)]">—</span>}
-        </p>
+      {/* A ring rather than a bare number. The screen needed one thing the eye
+          lands on first — at arm's length in sun a figure floating in space
+          reads as text among text, where a filled arc is a shape you take in
+          before you read anything. */}
+      <div className="card my-6 flex flex-col items-center gap-2 px-4 py-6">
+        {task.na ? (
+          <>
+            <p className="text-[22px] font-semibold text-[color:var(--text-muted)]">Not applicable</p>
+            <p className="text-[13px] text-[color:var(--text-secondary)]">
+              Excluded from this job&apos;s percentage
+            </p>
+          </>
+        ) : (
+          <ProgressRing
+            progress={{
+              state: typeof task.pct !== 'number' ? 'zero' : task.pct === 0 ? 'zero' : task.pct >= 100 ? 'complete' : 'progress',
+              percent: typeof task.pct === 'number' ? task.pct : 0,
+              started: 0,
+              total: 1,
+            }}
+            size={132}
+            stroke={11}
+          />
+        )}
+        {!task.na && <TaskStatus task={task} showLabel />}
         {task.updatedBy && !task.na && (
-          <p className="mt-2 text-[13px] text-[color:var(--text-secondary)]">
+          <p className="text-[13px] text-[color:var(--text-secondary)]">
             Set by {task.updatedBy}, {relativeTime(task.updatedAt)}
           </p>
         )}
@@ -30,7 +51,7 @@ export default function TaskDetailScreen({ task, position, total, onSetPercent, 
 
       <button
         onClick={onToggleNa}
-        className="tap mt-4 flex w-full items-center justify-center rounded-xl border border-[color:var(--border)] text-[14px] text-[color:var(--text-secondary)]"
+        className="tap pressable mt-4 flex w-full items-center justify-center rounded-[var(--radius-control)] bg-[color:var(--surface-2)] text-[14px] text-[color:var(--text-secondary)]"
       >
         {task.na ? 'This job does need it' : "Doesn't apply to this job"}
       </button>
@@ -41,7 +62,7 @@ export default function TaskDetailScreen({ task, position, total, onSetPercent, 
             {task.attachments.map((a) => (
               <li
                 key={a.id}
-                className="rounded-xl bg-[color:var(--surface-2)] px-3 py-2 text-[14px] text-[color:var(--text-secondary)]"
+                className="rounded-[var(--radius-control)] bg-[color:var(--surface-2)] px-3 py-2 text-[14px] text-[color:var(--text-secondary)]"
               >
                 {a.kind === 'photo' ? '📷 Site photo' : a.text}
               </li>
@@ -51,13 +72,13 @@ export default function TaskDetailScreen({ task, position, total, onSetPercent, 
         <div className="grid grid-cols-2 gap-3">
           <button
             onClick={() => onFakeAttach('photo')}
-            className="tap flex items-center justify-center gap-2 rounded-xl border border-[color:var(--border)] bg-[color:var(--surface-1)] text-[15px]"
+            className="tap pressable card flex items-center justify-center gap-2 text-[15px]"
           >
             <Camera size={18} aria-hidden="true" /> Add photo
           </button>
           <button
             onClick={() => onFakeAttach('note')}
-            className="tap flex items-center justify-center gap-2 rounded-xl border border-[color:var(--border)] bg-[color:var(--surface-1)] text-[15px]"
+            className="tap pressable card flex items-center justify-center gap-2 text-[15px]"
           >
             <StickyNote size={18} aria-hidden="true" /> Add note
           </button>

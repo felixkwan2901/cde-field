@@ -27,7 +27,7 @@ export default function StaffPickerScreen({ staff, loading, onPick }) {
             <li key={person.id}>
               <button
                 onClick={() => onPick(person)}
-                className="tap flex w-full items-center gap-3 rounded-2xl border border-[color:var(--border)] bg-[color:var(--surface-1)] px-4 py-4 text-left"
+                className="tap pressable card flex w-full items-center gap-3 px-4 py-4 text-left"
               >
                 <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[color:var(--surface-2)] text-[15px] font-medium">
                   {initials(person.name)}

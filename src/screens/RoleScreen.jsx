@@ -17,7 +17,7 @@ export default function RoleScreen({ onPick }) {
       <div className="flex flex-col gap-3">
         <button
           onClick={() => onPick('worker')}
-          className="flex items-center gap-4 rounded-2xl border border-[color:var(--border)] bg-[color:var(--surface-1)] p-5 text-left"
+          className="card pressable flex items-center gap-4 p-5 text-left"
         >
           <HardHat size={26} className="shrink-0 text-[color:var(--brand-green)]" aria-hidden="true" />
           <span>
@@ -30,7 +30,7 @@ export default function RoleScreen({ onPick }) {
 
         <button
           onClick={() => onPick('manager')}
-          className="flex items-center gap-4 rounded-2xl border border-[color:var(--border)] bg-[color:var(--surface-1)] p-5 text-left"
+          className="card pressable flex items-center gap-4 p-5 text-left"
         >
           <ClipboardList size={26} className="shrink-0 text-[color:var(--brand-orange)]" aria-hidden="true" />
           <span>
@@ -44,7 +44,7 @@ export default function RoleScreen({ onPick }) {
 
       {/* Said plainly rather than buried in a README nobody on site will
           read. This is a view, not a permission. */}
-      <p className="mt-6 rounded-xl bg-[color:var(--surface-2)] px-4 py-3 text-[12px] leading-relaxed text-[color:var(--text-muted)]">
+      <p className="mt-6 rounded-[var(--radius-control)] bg-[color:var(--surface-2)] px-4 py-3 text-[12px] leading-relaxed text-[color:var(--text-muted)]">
         Prototype. There&apos;s no sign-in — picking a role or a name identifies you to
         your workmates, it doesn&apos;t restrict anything.
       </p>

@@ -32,7 +32,17 @@
   --status-critical: #b4231d;
   --status-critical-bg: rgba(180, 35, 29, 0.1);
 
-  --shadow: 0 1px 2px rgba(23, 33, 43, 0.06), 0 4px 16px rgba(23, 33, 43, 0.06);
+  /* Cards sit on the page rather than being drawn onto it. A hairline
+     border on a near-white ground is nearly invisible outdoors — the screen
+     is washed out and a 1px 6%-contrast line is the first thing to go — so
+     separation comes from a soft shadow plus a faint ring, which survives
+     glare far better. */
+  --shadow-card: 0 1px 2px rgba(23, 33, 43, 0.05), 0 6px 16px -6px rgba(23, 33, 43, 0.14);
+  --ring-card: 0 0 0 1px rgba(23, 33, 43, 0.06);
+  --shadow: var(--shadow-card);
+
+  --radius-card: 16px;
+  --radius-control: 12px;
   color-scheme: light;
 }
 
@@ -58,7 +68,12 @@
   --status-critical: #f87171;
   --status-critical-bg: rgba(248, 113, 113, 0.12);
 
-  --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 8px 24px rgba(0, 0, 0, 0.45);
+  /* In the dark theme a shadow does nothing — black on near-black is not a
+     separation — so the same job is done by lifting the card's surface above
+     the page and keeping a slightly brighter ring. */
+  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.5);
+  --ring-card: 0 0 0 1px rgba(255, 255, 255, 0.07);
+  --shadow: var(--shadow-card);
   color-scheme: dark;
 }
 
@@ -106,6 +121,33 @@ body {
 }
 .safe-bottom {
   padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* One card treatment, used everywhere, so nothing drifts into having its own
+   idea of a corner radius. */
+.card {
+  background: var(--surface-1);
+  border-radius: var(--radius-card);
+  box-shadow: var(--ring-card), var(--shadow-card);
+}
+
+/* A pressed state you can feel through a glove. Touch has no hover, so the
+   only feedback available is what happens under the finger — without this a
+   tap on a phone is completely silent. */
+.pressable {
+  transition: transform 120ms ease, box-shadow 120ms ease;
+}
+.pressable:active {
+  transform: scale(0.985);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pressable {
+    transition: none;
+  }
+  .pressable:active {
+    transform: none;
+  }
 }
 
 /* Gloves. A nitrile glove spreads the capacitive contact patch and shifts

@@ -1,6 +1,7 @@
 import { ChevronRight, MapPin } from 'lucide-react'
 import ProgressRing from '../components/ProgressRing'
 import ProgressBar from '../components/ProgressBar'
+import TaskStatus from '../components/TaskStatus'
 import EmptyState from '../components/EmptyState'
 import { jobProgress, progressCaption } from '../lib/progress'
 import { relativeTime } from '../lib/format'
@@ -19,7 +20,7 @@ export default function JobTasksScreen({ job, onOpenTask, onOpenInfo }) {
 
   return (
     <>
-      <div className="mb-4 rounded-2xl bg-[color:var(--surface-1)] p-4">
+      <div className="card mb-5 p-4">
         <div className="flex items-center gap-4">
           <ProgressRing progress={progress} size={84} />
           <div className="min-w-0">
@@ -35,7 +36,7 @@ export default function JobTasksScreen({ job, onOpenTask, onOpenInfo }) {
             else. */}
         <button
           onClick={onOpenInfo}
-          className="tap mt-3 flex w-full items-center gap-2 rounded-xl border border-[color:var(--border)] px-3 py-2 text-left"
+          className="tap pressable mt-4 flex w-full items-center gap-2 rounded-[var(--radius-control)] bg-[color:var(--surface-2)] px-3 py-2 text-left"
         >
           <MapPin size={18} className="shrink-0 text-[color:var(--text-muted)]" aria-hidden="true" />
           <span className="min-w-0 flex-1 truncate text-[14px]">{job.site.address}</span>
@@ -59,10 +60,15 @@ export default function JobTasksScreen({ job, onOpenTask, onOpenInfo }) {
                 <li key={task.id}>
                   <button
                     onClick={() => onOpenTask(task.id)}
-                    className="flex w-full items-center gap-3 rounded-2xl border border-[color:var(--border)] bg-[color:var(--surface-1)] px-3 py-3 text-left"
+                    className="card pressable flex w-full items-center gap-3 px-3 py-3 text-left"
                   >
                     <div className="min-w-0 flex-1">
-                      <p className="text-[15px] leading-snug">{task.name}</p>
+                      <p className="flex items-start gap-2 text-[15px] leading-snug">
+                        <span className="mt-[5px]">
+                          <TaskStatus task={task} />
+                        </span>
+                        <span className="min-w-0">{task.name}</span>
+                      </p>
                       <div className="mt-2">
                         <ProgressBar pct={task.pct} na={task.na} />
                       </div>
