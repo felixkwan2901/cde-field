@@ -14,6 +14,7 @@ const base = process.env.APP_BASE ?? '/cde-field/'
 
 export default defineConfig({
   base,
+  server: { port: 5300, strictPort: true },
   define: {
     __BUILD_ID__: JSON.stringify(process.env.GITHUB_SHA ?? 'dev'),
   },
