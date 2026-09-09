@@ -9,6 +9,11 @@
 //
 // Invented sites and invented people. Nothing here is a real Cassidy-Davies
 // job, deliberately: this is a public repo and the app has no authentication.
+//
+// The coordinates are real Christchurch and Rolleston points, so the map has
+// honest geography under the made-up addresses. Real jobs cannot appear on
+// the map yet: the workbook has no address column anywhere, so there is
+// nothing to place. Adding one address per job is what unlocks it.
 const t = (id, name, area, pct = null, extra = {}) => ({
   id,
   name,
@@ -32,6 +37,8 @@ export const JOBS = [
     type: 'commercial',
     site: {
       address: '48 Wairakei Road, Bryndwr, Christchurch',
+      lat: -43.5065,
+      lng: 172.5842,
       mapQuery: '48 Wairakei Road, Christchurch',
       gateCode: '4821',
       parking: 'Rear yard off Grahams Road. Do not block the loading bay.',
@@ -76,6 +83,8 @@ export const JOBS = [
     type: 'residential',
     site: {
       address: '12 Pinehaven Road, Halswell, Christchurch',
+      lat: -43.5601,
+      lng: 172.5546,
       mapQuery: '12 Pinehaven Road, Christchurch',
       gateCode: 'Key safe by the garage — 2907',
       parking: 'On the street, mind the neighbour’s driveway',
@@ -111,6 +120,8 @@ export const JOBS = [
     type: 'commercial',
     site: {
       address: '7 Jones Road, Rolleston',
+      lat: -43.5893,
+      lng: 172.3823,
       mapQuery: '7 Jones Road, Rolleston',
       gateCode: 'Site office — sign in with Kerry',
       parking: 'Gravel area at the front',
@@ -137,6 +148,8 @@ export const JOBS = [
     type: 'residential',
     site: {
       address: '31 Kensington Avenue, Sydenham, Christchurch',
+      lat: -43.5497,
+      lng: 172.6363,
       mapQuery: '31 Kensington Avenue, Christchurch',
       gateCode: 'Side gate, unlocked',
       parking: 'Driveway',

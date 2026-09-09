@@ -1,14 +1,16 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import Screen from './components/Screen'
 import SyncBadge from './components/SyncBadge'
 import UndoToast from './components/UndoToast'
 import { SkeletonRows } from './components/EmptyState'
+import RoleScreen from './screens/RoleScreen'
 import StaffPickerScreen from './screens/StaffPickerScreen'
+import ManagerScreen from './screens/ManagerScreen'
 import TodayScreen from './screens/TodayScreen'
 import JobTasksScreen from './screens/JobTasksScreen'
 import TaskDetailScreen from './screens/TaskDetailScreen'
 import JobInfoScreen from './screens/JobInfoScreen'
-import { listJobsForStaff, listStaff, setTaskPercent, addAttachment } from './lib/dataSource'
+import { listAllJobs, listJobsForStaff, listStaff, setTaskPercent, addAttachment } from './lib/dataSource'
 import { readStaff, writeStaff } from './lib/identity'
 import { applyTheme, readTheme } from './lib/theme'
 import { enqueue, readQueue, startFlushing } from './lib/outbox'
@@ -21,6 +23,10 @@ const initialTheme = applyTheme(readTheme())
 export default function App() {
   const [theme, setTheme] = useState(initialTheme)
   const [staff, setStaff] = useState(readStaff)
+  // Chosen before the name, and only asked once — it is stored with the
+  // identity, so switching who you are also lets you switch which question
+  // the app is answering.
+  const [role, setRole] = useState(() => readStaff()?.role ?? null)
   const [roster, setRoster] = useState([])
   const [rosterLoading, setRosterLoading] = useState(true)
   const [jobs, setJobs] = useState([])
@@ -46,7 +52,8 @@ export default function App() {
   useEffect(() => {
     if (!staff) return undefined
     let cancelled = false
-    listJobsForStaff(staff.id).then((list) => {
+    const load = role === 'manager' ? listAllJobs() : listJobsForStaff(staff.id)
+    load.then((list) => {
       if (cancelled) return
       setJobs(list)
       setJobsLoading(false)
@@ -54,7 +61,7 @@ export default function App() {
     return () => {
       cancelled = true
     }
-  }, [staff, reloadKey])
+  }, [staff, role, reloadKey])
 
   useEffect(() => {
     readQueue().then((q) => setPending(q.length))
@@ -81,8 +88,18 @@ export default function App() {
   }
 
   function pickStaff(person) {
-    setStaff(writeStaff(person))
+    setStaff(writeStaff({ ...person, role }))
     setView({ name: 'today' })
+  }
+
+  // Memoised because JobMap rebuilds its markers when this changes, and an
+  // arrow function created during render is a different function every time.
+  const openJob = useCallback((jobId) => setView({ name: 'job', jobId }), [])
+
+  function signOut() {
+    writeStaff(null)
+    setStaff(null)
+    setRole(null)
   }
 
   const job = jobs.find((j) => j.id === view.jobId)
@@ -133,6 +150,7 @@ export default function App() {
     setReloadKey((n) => n + 1)
   }
 
+  if (!role) return <RoleScreen onPick={setRole} />
   if (!staff) {
     return <StaffPickerScreen staff={roster} loading={rosterLoading} onPick={pickStaff} />
   }
@@ -141,12 +159,16 @@ export default function App() {
     staff,
     theme,
     onToggleTheme: toggleTheme,
-    onSwitchStaff: () => setStaff(writeStaff(null)),
+    onSwitchStaff: signOut,
   }
 
   const body = () => {
     if (view.name === 'today') {
-      return <TodayScreen jobs={jobs} loading={jobsLoading} onOpenJob={(jobId) => setView({ name: 'job', jobId })} />
+      return role === 'manager' ? (
+        <ManagerScreen jobs={jobs} loading={jobsLoading} onOpenJob={openJob} />
+      ) : (
+        <TodayScreen jobs={jobs} loading={jobsLoading} onOpenJob={openJob} />
+      )
     }
     if (!job) return <SkeletonRows />
     if (view.name === 'job') {
@@ -177,7 +199,10 @@ export default function App() {
   }
 
   const titles = {
-    today: { title: 'Today', subtitle: staff.name },
+    today:
+      role === 'manager'
+        ? { title: 'All jobs', subtitle: `${staff.name} · managing` }
+        : { title: 'Today', subtitle: staff.name },
     job: { title: job ? `${job.jobNumber} ${job.jobName}` : 'Job' },
     info: { title: 'Job info', subtitle: job?.jobName },
     task: { title: job ? job.jobName : 'Task' },

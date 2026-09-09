@@ -38,6 +38,12 @@ export async function listJobsForStaff(staffId) {
   return withProgress(await settle(jobs))
 }
 
+// Every job, for the manager view. Same merge as the worker's list; the
+// difference is only that nothing is filtered by who is assigned.
+export async function listAllJobs() {
+  return withProgress(await settle(JOBS))
+}
+
 export async function getJob(jobId) {
   const job = JOBS.find((j) => j.id === jobId)
   if (!job) return null
