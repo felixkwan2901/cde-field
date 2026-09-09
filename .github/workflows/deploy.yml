@@ -1,0 +1,44 @@
+name: Build and deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+# Only one deploy at a time. Nothing here pushes commits automatically the
+# way the dashboard's upload worker does, so this is just insurance against a
+# manual dispatch racing a push and the two fighting over the gh-pages ref.
+concurrency:
+  group: pages-deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+
+      - name: Record this deploy's commit as the build ID
+        run: echo "$GITHUB_SHA" > public/build-id.txt
+
+      - run: npm run build
+
+      - uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./dist
+          # A phone holds a stale app shell far longer than a desktop tab, so
+          # this matters more here than on the dashboard: without it a deploy
+          # deletes the content-hashed files a cached index.html still asks
+          # for, and the app is a blank screen before React mounts.
+          keep_files: true

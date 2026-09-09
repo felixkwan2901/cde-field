@@ -1,0 +1,122 @@
+@import 'tailwindcss';
+
+/* Design tokens, taken from the dashboard so the two apps read as one system
+   — but light-first, which is the one deliberate inversion.
+   
+   The dashboard defaults to dark and follows the OS. This app does not. A
+   dark UI in direct sun is unreadable: auto-brightness maxes out and a dark
+   screen simply emits less light than the sky reflecting off the glass. An
+   electrician's phone on auto-dark at 5pm says nothing about the roof they
+   are standing on, so dark is an explicit choice here, not an inherited one.
+   See src/lib/theme.js. */
+:root {
+  --brand-orange: #ef6c1f;
+  --brand-green: #17864a;
+  --brand-green-ink: #ffffff;
+
+  --page-plane: #f4f6f8;
+  --surface-1: #ffffff;
+  --surface-2: #eef1f5;
+
+  --text-primary: #17212b;
+  --text-secondary: #4a5763;
+  --text-muted: #68757f;
+
+  --gridline: #dfe4ea;
+  --border: #dfe4ea;
+
+  --status-good: #17864a;
+  --status-good-bg: rgba(23, 134, 74, 0.1);
+  --status-warning: #8a6100;
+  --status-warning-bg: rgba(214, 158, 46, 0.14);
+  --status-critical: #b4231d;
+  --status-critical-bg: rgba(180, 35, 29, 0.1);
+
+  --shadow: 0 1px 2px rgba(23, 33, 43, 0.06), 0 4px 16px rgba(23, 33, 43, 0.06);
+  color-scheme: light;
+}
+
+:root[data-theme='dark'] {
+  --page-plane: #0d1117;
+  --surface-1: #161c24;
+  --surface-2: #1b232e;
+
+  --text-primary: #f5f7fa;
+  --text-secondary: #a5afb8;
+  --text-muted: #8b95a1;
+
+  --gridline: #232b3a;
+  --border: rgba(255, 255, 255, 0.08);
+
+  --brand-green: #38b86a;
+  --brand-green-ink: #04170c;
+
+  --status-good: #38b86a;
+  --status-good-bg: rgba(56, 184, 106, 0.14);
+  --status-warning: #f2a94e;
+  --status-warning-bg: rgba(242, 169, 78, 0.14);
+  --status-critical: #f87171;
+  --status-critical-bg: rgba(248, 113, 113, 0.12);
+
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 8px 24px rgba(0, 0, 0, 0.45);
+  color-scheme: dark;
+}
+
+@font-face {
+  font-family: 'Geist';
+  src: url('./assets/fonts/geist-400.woff2') format('woff2');
+  font-weight: 400;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Geist';
+  src: url('./assets/fonts/geist-500.woff2') format('woff2');
+  font-weight: 500;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Geist';
+  src: url('./assets/fonts/geist-600.woff2') format('woff2');
+  font-weight: 600;
+  font-display: swap;
+}
+
+html,
+body {
+  margin: 0;
+  background: var(--page-plane);
+  color: var(--text-primary);
+  font-family: 'Geist', -apple-system, system-ui, sans-serif;
+  /* 16px minimum. Anything smaller is unreadable at arm's length in bad
+     light, and on iOS a sub-16px input also triggers a zoom on focus. */
+  font-size: 16px;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Nothing here scrolls sideways. A horizontal scrollbar on a phone means
+   something is mis-sized, so it is clipped rather than hidden behind a
+   gesture nobody will find. */
+body {
+  overflow-x: hidden;
+}
+
+/* The screen frame owns the notch and the home indicator. */
+.safe-top {
+  padding-top: env(safe-area-inset-top);
+}
+.safe-bottom {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* Gloves. A nitrile glove spreads the capacitive contact patch and shifts
+   its centroid, so Apple's 44pt — which assumes a bare fingertip — is not
+   enough. Every tap target in this app is at least this big. */
+.tap {
+  min-height: 56px;
+  min-width: 56px;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+}
