@@ -43,6 +43,11 @@
 
   --radius-card: 16px;
   --radius-control: 12px;
+
+  /* The two fixed bars. Everything that scrolls has to clear them, so their
+     heights are tokens rather than magic numbers repeated in six places. */
+  --nav-h: 52px;
+  --tab-h: 56px;
   color-scheme: light;
 }
 
@@ -113,6 +118,32 @@ body {
    gesture nobody will find. */
 body {
   overflow-x: hidden;
+  /* Installed to a home screen this is the whole window, so a rubber-band
+     scroll at the top drags the page away from the status bar and shows the
+     browser's ground underneath — which instantly reads as a web page in a
+     costume. Contain keeps the bounce inside the scroller. */
+  overscroll-behavior-y: contain;
+}
+
+/* Three things that separate a web page from an app, none of which a browser
+   does by default:
+   - the grey flash a mobile browser paints over a tapped element, which
+     always lands a beat behind the finger and never matches the design;
+   - the 300ms wait for a possible double-tap-to-zoom before a tap counts;
+   - text selection and the callout menu appearing when a finger rests on a
+     button, which on a list of buttons is every long press. */
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+button,
+[role='button'],
+a,
+.chrome-text {
+  touch-action: manipulation;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
 }
 
 /* The screen frame owns the notch and the home indicator. */
@@ -156,6 +187,228 @@ body {
 .tap {
   min-height: 56px;
   min-width: 56px;
+}
+
+/* ---------- the app frame ---------- */
+
+/* A phone app is not a document that scrolls under a header. It is a fixed
+   frame with one scrolling panel inside it: the bars stay put, the content
+   moves, and the scroll ends where the content ends rather than dragging
+   the whole interface with it. Getting this right is most of the difference
+   between "a website on a phone" and "an app". */
+.app-frame {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.app-scroll {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: contain;
+}
+
+/* The compact bar pinned to the top. Translucent with a blur, because that
+   is what sits over scrolling content on both platforms now — and because
+   the alternative, an opaque bar, makes the content look like it stops
+   dead at the bar rather than passing under it. */
+.navbar {
+  position: relative;
+  z-index: 20;
+  padding-top: env(safe-area-inset-top);
+  background: color-mix(in srgb, var(--surface-1) 82%, transparent);
+  backdrop-filter: saturate(180%) blur(20px);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+}
+
+/* No backdrop-filter (Firefox Android, older WebViews) means the blur does
+   nothing and the bar is 82% transparent over moving text, which is worse
+   than no effect. Fall back to opaque. */
+@supports not (backdrop-filter: blur(1px)) {
+  .navbar {
+    background: var(--surface-1);
+  }
+}
+
+.navbar__row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  height: var(--nav-h);
+  padding: 0 4px;
+}
+
+/* The hairline only appears once content has scrolled under the bar. A
+   permanent rule under a large title draws a box around nothing. */
+.navbar--bordered {
+  box-shadow: inset 0 -0.5px 0 var(--border);
+}
+
+/* The inline title crossfades in as the large one leaves. Both are present
+   in the DOM the whole time so nothing reflows at the swap. */
+.navbar__title {
+  opacity: 0;
+  transform: translateY(6px);
+  transition: opacity 180ms ease, transform 180ms ease;
+}
+.navbar__title--shown {
+  opacity: 1;
+  transform: none;
+}
+
+/* The large title, in the scroll flow rather than in the bar — it is
+   content that happens to be a heading, which is why it scrolls away. */
+.large-title {
+  font-size: 30px;
+  line-height: 1.15;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+/* ---------- tab bar ---------- */
+
+.tabbar {
+  position: relative;
+  z-index: 20;
+  display: flex;
+  padding-bottom: env(safe-area-inset-bottom);
+  background: color-mix(in srgb, var(--surface-1) 86%, transparent);
+  backdrop-filter: saturate(180%) blur(20px);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  box-shadow: inset 0 0.5px 0 var(--border);
+}
+
+@supports not (backdrop-filter: blur(1px)) {
+  .tabbar {
+    background: var(--surface-1);
+  }
+}
+
+.tabbar__item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  height: var(--tab-h);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  color: var(--text-muted);
+  transition: color 120ms ease;
+}
+
+.tabbar__item[aria-selected='true'] {
+  color: var(--brand-green);
+}
+
+/* The icon takes the press, not the whole tab: a full-width flash across a
+   third of the screen is far heavier feedback than the action deserves. */
+.tabbar__item:active .tabbar__icon {
+  transform: scale(0.88);
+}
+
+.tabbar__icon {
+  transition: transform 120ms ease;
+}
+
+/* ---------- push / pop ---------- */
+
+/* Going deeper slides in from the right, coming back slides out to it —
+   the direction carries the same information as the back chevron, which is
+   why every phone OS does it and no website does. */
+@keyframes push-in {
+  from {
+    opacity: 0;
+    transform: translateX(18px);
+  }
+}
+
+@keyframes pop-in {
+  from {
+    opacity: 0;
+    transform: translateX(-14px);
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+.nav-push {
+  animation: push-in 240ms cubic-bezier(0.32, 0.72, 0, 1);
+}
+.nav-pop {
+  animation: pop-in 240ms cubic-bezier(0.32, 0.72, 0, 1);
+}
+.nav-fade {
+  animation: fade-in 200ms ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nav-push,
+  .nav-pop,
+  .nav-fade {
+    animation: none;
+  }
+  .navbar__title {
+    transition: none;
+  }
+}
+
+/* ---------- grouped list ---------- */
+
+/* The inset grouped list every phone settings screen is built from: one
+   rounded card, rows divided by a hairline that stops short of the left
+   edge so the divider reads as separating rows rather than boxing them. */
+.list-group {
+  background: var(--surface-1);
+  border-radius: var(--radius-card);
+  box-shadow: var(--ring-card), var(--shadow-card);
+  overflow: hidden;
+}
+
+.list-row {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 12px;
+  min-height: 56px;
+  padding: 12px 14px;
+  text-align: left;
+  position: relative;
+}
+
+.list-row + .list-row::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 14px;
+  right: 0;
+  height: 0.5px;
+  background: var(--border);
+}
+
+/* A row is a whole-width target, so it highlights rather than shrinking:
+   scaling a full-bleed row leaves a visible gap at both edges. */
+.list-row:active {
+  background: var(--surface-2);
+}
+
+.list-label {
+  padding: 0 4px 6px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--text-muted);
 }
 
 button {

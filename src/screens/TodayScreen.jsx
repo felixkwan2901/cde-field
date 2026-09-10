@@ -1,6 +1,5 @@
 import { ChevronRight, MapPin } from 'lucide-react'
 import ProgressRing from '../components/ProgressRing'
-import JobMap from '../components/JobMap'
 import EmptyState, { SkeletonRows } from '../components/EmptyState'
 import { dayProgress, jobProgress, progressCaption } from '../lib/progress'
 import { relativeTime, today } from '../lib/format'
@@ -19,15 +18,6 @@ export default function TodayScreen({ jobs, loading, onOpenJob }) {
           </p>
         </div>
       </div>
-
-      {/* Where today's jobs actually are. This belongs on the worker's screen
-          rather than the manager's: knowing a site's location matters when
-          you are driving to it, not when you are reading a list at a desk. */}
-      {!loading && jobs.length > 1 && (
-        <div className="mb-5">
-          <JobMap jobs={jobs} onOpenJob={onOpenJob} height={190} />
-        </div>
-      )}
 
       {loading ? (
         <SkeletonRows />

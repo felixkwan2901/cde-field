@@ -34,7 +34,7 @@ export default defineConfig({
         name: 'Cassidy-Davies Electrical — Field',
         short_name: 'CDE Field',
         description: 'On-site task progress for Cassidy-Davies electricians.',
-        theme_color: '#1f2a37',
+        theme_color: '#ffffff',
         background_color: '#f4f6f8',
         display: 'standalone',
         // Its own scope, so this and the dashboard can both be installed from

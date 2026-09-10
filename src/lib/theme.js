@@ -17,8 +17,16 @@ export function readTheme() {
   }
 }
 
+// The phone paints the status bar and the Android nav bar from this, and it
+// is the last thing that gives an installed PWA away: a white app under a
+// slate status bar looks like a page inside a browser someone forgot to
+// theme. It has to move with the theme, so it is set here rather than left
+// as a fixed value in index.html.
+const BAR = { light: '#ffffff', dark: '#161c24' }
+
 export function applyTheme(theme) {
   document.documentElement.setAttribute('data-theme', theme)
+  document.querySelector('meta[name="theme-color"]')?.setAttribute('content', BAR[theme] ?? BAR.light)
   try {
     localStorage.setItem(KEY, theme)
   } catch {

@@ -1,47 +1,118 @@
-import { ChevronLeft, Moon, Sun } from 'lucide-react'
-import { initials } from '../lib/format'
+import { useEffect, useRef, useState } from 'react'
+import { ChevronLeft } from 'lucide-react'
+import TabBar from './TabBar'
 
-// The frame every screen sits in: a sticky header that owns the notch, a
-// scrolling body, and bottom padding that clears the home indicator.
-export default function Screen({ title, subtitle, onBack, staff, onSwitchStaff, theme, onToggleTheme, children }) {
+// The frame every screen sits in.
+//
+// This is a fixed shell with one scrolling panel between two bars, not a
+// document that scrolls under a sticky header. The distinction is the
+// whole reason the app reads as an app: the bars never move, the scroll
+// stops where the content stops, and a hard flick at the top bounces the
+// list rather than peeling the interface off the status bar.
+//
+// Two title treatments, following what every phone OS does:
+//
+//   Root screens (a tab)   large title in the scroll flow, no back
+//                          chevron, tab bar visible. The title is content
+//                          — you scroll it away and get the space back.
+//
+//   Pushed screens         inline title in the bar, back chevron, no tab
+//                          bar. You are inside something; the way out is
+//                          backwards, not sideways.
+//
+// On a root screen the inline title crossfades in as the large one leaves,
+// so the heading is never absent — which is what makes it safe to give the
+// large one away to the content.
+export default function Screen({
+  title,
+  subtitle,
+  onBack,
+  largeTitle = false,
+  actions,
+  tabs,
+  currentTab,
+  onSelectTab,
+  animation,
+  scrollKey,
+  children,
+}) {
+  const scrollRef = useRef(null)
+  const sentinelRef = useRef(null)
+  const [scrolled, setScrolled] = useState(false)
+
+  // The inline title appears exactly when the large one has gone, which an
+  // observer on a sentinel answers directly. A scroll handler would have to
+  // guess the crossover point from a pixel offset and would re-run on every
+  // frame of a flick to do it.
+  //
+  // No reset when largeTitle is false: `showInline` short-circuits on it, so
+  // a stale value is unreachable, and observing on the next root screen
+  // fires immediately with the correct answer anyway.
+  useEffect(() => {
+    const el = sentinelRef.current
+    if (!largeTitle || !el) return
+    const io = new IntersectionObserver(([entry]) => setScrolled(!entry.isIntersecting), {
+      root: scrollRef.current,
+      threshold: 0,
+    })
+    io.observe(el)
+    return () => io.disconnect()
+  }, [largeTitle, title])
+
+  // A pushed screen opens at the top. Without this the new screen inherits
+  // wherever the previous one was scrolled to, because it is the same
+  // scrolling element underneath.
+  useEffect(() => {
+    scrollRef.current?.scrollTo(0, 0)
+  }, [scrollKey])
+
+  const showInline = !largeTitle || scrolled
+
   return (
-    <div className="mx-auto flex min-h-screen w-full max-w-md flex-col">
-      <header className="safe-top sticky top-0 z-20 border-b border-[color:var(--border)] bg-[color:var(--surface-1)]">
-        <div className="flex items-center gap-2 px-3 py-2">
+    <div className="app-frame">
+      <header className={`navbar ${showInline && (scrolled || !largeTitle) ? 'navbar--bordered' : ''}`}>
+        <div className="navbar__row">
           {onBack ? (
-            <button onClick={onBack} aria-label="Back" className="tap -ml-2 flex items-center justify-center rounded-xl">
-              <ChevronLeft size={26} />
+            <button
+              onClick={onBack}
+              aria-label="Back"
+              className="tap flex items-center justify-center rounded-xl"
+            >
+              <ChevronLeft size={27} strokeWidth={2.1} />
             </button>
           ) : (
-            <span className="w-2" />
+            <span className="w-3" />
           )}
-          <div className="min-w-0 flex-1">
-            <h1 className="truncate text-[17px] font-semibold leading-tight">{title}</h1>
+          <div className={`navbar__title min-w-0 flex-1 px-1 ${showInline ? 'navbar__title--shown' : ''}`}>
+            <h1 className="truncate text-[16px] font-semibold leading-tight">{title}</h1>
             {subtitle && (
-              <p className="truncate text-[13px] text-[color:var(--text-secondary)]">{subtitle}</p>
+              <p className="truncate text-[12px] leading-tight text-[color:var(--text-secondary)]">
+                {subtitle}
+              </p>
             )}
           </div>
-          <button
-            onClick={onToggleTheme}
-            aria-label={theme === 'dark' ? 'Switch to light' : 'Switch to dark'}
-            className="tap flex items-center justify-center rounded-xl text-[color:var(--text-secondary)]"
-          >
-            {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
-          </button>
-          {staff && (
-            <button
-              onClick={onSwitchStaff}
-              aria-label={`Signed in as ${staff.name}. Change.`}
-              className="tap flex items-center justify-center"
-            >
-              <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[color:var(--surface-2)] text-[13px] font-medium">
-                {initials(staff.name)}
-              </span>
-            </button>
-          )}
+          <div className="flex items-center">{actions}</div>
         </div>
       </header>
-      <main className="safe-bottom flex-1 px-4 pb-10 pt-4">{children}</main>
+
+      <div className="app-scroll" ref={scrollRef}>
+        <div className={`mx-auto w-full max-w-md px-4 pb-8 ${animation ?? ''}`}>
+          {largeTitle && (
+            <div className="pb-1 pt-2">
+              <h2 className="large-title">{title}</h2>
+              {subtitle && (
+                <p className="mt-0.5 text-[14px] text-[color:var(--text-secondary)]">{subtitle}</p>
+              )}
+            </div>
+          )}
+          {/* Sits where the large title ends, so "has it gone?" is a
+              question about this element being on screen. */}
+          <div ref={sentinelRef} aria-hidden="true" className="h-px" />
+          <div className="pt-3">{children}</div>
+        </div>
+      </div>
+
+      {tabs && <TabBar tabs={tabs} current={currentTab} onSelect={onSelectTab} />}
     </div>
   )
 }

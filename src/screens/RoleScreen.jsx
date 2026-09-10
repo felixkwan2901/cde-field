@@ -6,9 +6,10 @@ import { ClipboardList, HardHat } from 'lucide-react'
 // has to wade through the other's screen.
 export default function RoleScreen({ onPick }) {
   return (
-    <div className="mx-auto flex min-h-screen w-full max-w-md flex-col px-4">
+    <div className="app-frame nav-fade">
+      <div className="app-scroll mx-auto w-full max-w-md px-4">
       <div className="safe-top pt-12 pb-8">
-        <h1 className="text-[26px] font-semibold">CDE Field</h1>
+        <h1 className="large-title">CDE Field</h1>
         <p className="mt-1 text-[15px] text-[color:var(--text-secondary)]">
           Which are you today?
         </p>
@@ -48,6 +49,8 @@ export default function RoleScreen({ onPick }) {
         Prototype. There&apos;s no sign-in — picking a role or a name identifies you to
         your workmates, it doesn&apos;t restrict anything.
       </p>
+      <div className="safe-bottom h-8" />
+      </div>
     </div>
   )
 }

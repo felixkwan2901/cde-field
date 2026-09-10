@@ -31,7 +31,7 @@ function pin(job) {
   })
 }
 
-export default function JobMap({ jobs, onOpenJob, height = 220 }) {
+export default function JobMap({ jobs, onOpenJob, height = 220, bleed = false }) {
   const holder = useRef(null)
   const map = useRef(null)
 
@@ -82,8 +82,10 @@ export default function JobMap({ jobs, onOpenJob, height = 220 }) {
     )
   }
 
+  // Full-bleed drops the card's radius and shadow with it: a rounded
+  // corner only makes sense on something with an edge on screen.
   return (
-    <div className="card overflow-hidden">
+    <div className={bleed ? 'overflow-hidden' : 'card overflow-hidden'}>
       <div ref={holder} style={{ height }} aria-label="Map of job sites" role="img" />
     </div>
   )

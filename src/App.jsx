@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { Home, Map as MapIcon, User, Users, Briefcase, FileText } from 'lucide-react'
 import Screen from './components/Screen'
 import SyncBadge from './components/SyncBadge'
 import UndoToast from './components/UndoToast'
@@ -13,14 +14,39 @@ import TaskDetailScreen from './screens/TaskDetailScreen'
 import JobInfoScreen from './screens/JobInfoScreen'
 import JobHistoryScreen from './screens/JobHistoryScreen'
 import JobNotesScreen from './screens/JobNotesScreen'
+import MapScreen from './screens/MapScreen'
+import MeScreen from './screens/MeScreen'
 import { addJobNote, getJob, listAllJobs, listJobsForStaff, listStaff, setTaskPercent, addAttachment } from './lib/dataSource'
 import { readStaff, writeStaff } from './lib/identity'
 import { applyTheme, readTheme } from './lib/theme'
 import { enqueue, readQueue, startFlushing } from './lib/outbox'
 import { clearDeepLinkJob, readDeepLinkJob } from './lib/deepLink'
-import InstallPrompt from './components/InstallPrompt'
 
 const initialTheme = applyTheme(readTheme())
+
+// The tabs, and with them the claim about what this app is. Everything here
+// is a place you can be; everything not here — a job, a task, the notes on
+// one — is somewhere you go *into*, which is why those push over the top and
+// take the tab bar away with them.
+//
+// The two roles get different tabs rather than a shared set with items
+// greyed out. They are different jobs: one person is recording work on the
+// two sites they are standing on, the other is watching eighteen people
+// across all of them.
+const WORKER_TABS = [
+  { key: 'today', label: 'Today', icon: Home },
+  { key: 'map', label: 'Map', icon: MapIcon },
+  { key: 'me', label: 'Me', icon: User },
+]
+
+const MANAGER_TABS = [
+  { key: 'today', label: 'Crew', icon: Users },
+  { key: 'jobs', label: 'Jobs', icon: Briefcase },
+  { key: 'report', label: 'Report', icon: FileText },
+  { key: 'me', label: 'Me', icon: User },
+]
+
+const ROOT_VIEWS = new Set(['today', 'map', 'jobs', 'report', 'me'])
 
 // Five linear screens, so navigation is a switch rather than a router. The
 // tripwire for adding one: if this passes about eight screens, or needs real
@@ -58,6 +84,10 @@ export default function App() {
   // without reading the clock in the render path.
   const [justSaved, setJustSaved] = useState(false)
   const [notice, setNotice] = useState(null)
+  // Which way the last navigation went, so the incoming screen can slide
+  // from the right side of the one it replaced.
+  const [anim, setAnim] = useState('nav-fade')
+  const viewNameRef = useRef('today')
 
   useEffect(() => {
     listStaff().then((list) => {
@@ -118,12 +148,27 @@ export default function App() {
 
   function pickStaff(person) {
     setStaff(writeStaff({ ...person, role }))
+    viewNameRef.current = 'today'
     setView({ name: 'today' })
   }
 
+  // How deep each screen is, which is the only thing the push/pop animation
+  // needs to know. Direction is decided where the navigation happens, not
+  // inferred afterwards by comparing renders — a render that compares itself
+  // to the last one is a render with a memory, and those go wrong the first
+  // time React runs it twice.
+  const navTo = useCallback((next) => {
+    const DEPTH = { today: 0, map: 0, jobs: 0, report: 0, me: 0, job: 1, info: 2, history: 2, notes: 2, task: 2 }
+    const from = DEPTH[viewNameRef.current] ?? 0
+    const to = DEPTH[next.name] ?? 0
+    setAnim(to > from ? 'nav-push' : to < from ? 'nav-pop' : 'nav-fade')
+    viewNameRef.current = next.name
+    setView(next)
+  }, [])
+
   // Memoised because JobMap rebuilds its markers when this changes, and an
   // arrow function created during render is a different function every time.
-  const openJob = useCallback((jobId) => setView({ name: 'job', jobId }), [])
+  const openJob = useCallback((jobId) => navTo({ name: 'job', jobId }), [navTo])
 
   // Live sync. The screen reads once when it opens, which is fine for one
   // person and wrong for two: a job worked on by a pair should not need a
@@ -164,6 +209,16 @@ export default function App() {
     writeStaff(null)
     setStaff(null)
     setRole(null)
+  }
+
+  // Swapping between on-site and managing keeps the name — it is the same
+  // person asking a different question, and making them re-pick themselves
+  // out of eighteen to do it would be a punishment for curiosity.
+  function switchRole() {
+    const next = role === 'manager' ? 'worker' : 'manager'
+    setRole(next)
+    setStaff(writeStaff({ ...staff, role: next }))
+    navTo({ name: 'today' })
   }
 
   const job = jobs.find((j) => j.id === view.jobId)
@@ -260,40 +315,46 @@ export default function App() {
 
   if (!role) return <RoleScreen onPick={setRole} />
   if (!staff) {
-    return <StaffPickerScreen staff={roster} loading={rosterLoading} onPick={pickStaff} />
+    return <StaffPickerScreen staff={roster} loading={rosterLoading} role={role} onPick={pickStaff} />
   }
 
-  const chrome = {
-    staff,
-    theme,
-    onToggleTheme: toggleTheme,
-    onSwitchStaff: signOut,
-  }
+  const tabs = role === 'manager' ? MANAGER_TABS : WORKER_TABS
+  const isRoot = ROOT_VIEWS.has(view.name)
 
   const body = () => {
+    if (view.name === 'me') {
+      return (
+        <MeScreen
+          staff={staff}
+          role={role}
+          theme={theme}
+          onToggleTheme={toggleTheme}
+          onSwitchStaff={signOut}
+          onSwitchRole={switchRole}
+        />
+      )
+    }
     if (view.name === 'today') {
       return role === 'manager' ? (
-        <ManagerScreen
-          jobs={jobs}
-          roster={roster}
-          loading={jobsLoading}
-          onOpenJob={openJob}
-          onOpenReport={() => setView({ name: 'report' })}
-        />
+        <ManagerScreen section="crew" jobs={jobs} roster={roster} loading={jobsLoading} onOpenJob={openJob} />
       ) : (
         <TodayScreen jobs={jobs} loading={jobsLoading} onOpenJob={openJob} />
       )
     }
+    if (view.name === 'jobs') {
+      return <ManagerScreen section="jobs" jobs={jobs} roster={roster} loading={jobsLoading} onOpenJob={openJob} />
+    }
+    if (view.name === 'map') return <MapScreen jobs={jobs} loading={jobsLoading} onOpenJob={openJob} />
     if (view.name === 'report') return <ReportScreen jobs={jobs} roster={roster} />
     if (!job) return <SkeletonRows />
     if (view.name === 'job') {
       return (
         <JobTasksScreen
           job={job}
-          onOpenTask={(taskId) => setView({ name: 'task', jobId: job.id, taskId })}
-          onOpenInfo={() => setView({ name: 'info', jobId: job.id })}
-          onOpenHistory={() => setView({ name: 'history', jobId: job.id })}
-          onOpenNotes={() => setView({ name: 'notes', jobId: job.id })}
+          onOpenTask={(taskId) => navTo({ name: 'task', jobId: job.id, taskId })}
+          onOpenInfo={() => navTo({ name: 'info', jobId: job.id })}
+          onOpenHistory={() => navTo({ name: 'history', jobId: job.id })}
+          onOpenNotes={() => navTo({ name: 'notes', jobId: job.id })}
         />
       )
     }
@@ -313,42 +374,54 @@ export default function App() {
           }
           history={(job.history ?? []).filter((e) => e.t === task.id)}
           onAttachPhoto={attachPhoto}
-          onOpenNotes={() => setView({ name: 'notes', jobId: job.id })}
+          onOpenNotes={() => navTo({ name: 'notes', jobId: job.id })}
         />
       )
     }
     return <SkeletonRows />
   }
 
+  // A root screen gets the big title; a pushed one gets it inline in the bar.
+  // Pushed titles are also longer — a job number plus a job name — which is
+  // the other half of the reason they are not set 30px.
   const titles = {
-    today:
-      role === 'manager'
-        ? { title: 'All jobs', subtitle: `${staff.name} · managing` }
-        : { title: 'Today', subtitle: staff.name },
+    today: role === 'manager' ? { title: 'Crew' } : { title: 'Today' },
+    jobs: { title: 'Jobs' },
+    map: { title: 'Map' },
+    report: { title: 'Meeting report' },
+    me: { title: 'Me' },
     job: { title: job ? `${job.jobNumber} ${job.jobName}` : 'Job' },
     info: { title: 'Job info', subtitle: job?.jobName },
     history: { title: 'History', subtitle: job?.jobName },
     notes: { title: 'Handover notes', subtitle: job?.jobName },
-    report: { title: 'Meeting report', subtitle: 'Field progress' },
     task: { title: job ? job.jobName : 'Task' },
   }
-  const back = {
-    today: null,
-    job: () => setView({ name: 'today' }),
-    info: () => setView({ name: 'job', jobId: view.jobId }),
-    history: () => setView({ name: 'job', jobId: view.jobId }),
-    notes: () => setView({ name: 'job', jobId: view.jobId }),
-    report: () => setView({ name: 'today' }),
-    task: () => setView({ name: 'job', jobId: view.jobId }),
-  }[view.name]
+
+  // Root screens have no back: the way out of a tab is another tab, and a
+  // chevron next to a tab bar is an invitation to a dead end.
+  const back = isRoot
+    ? null
+    : {
+        job: () => navTo({ name: 'today' }),
+        info: () => navTo({ name: 'job', jobId: view.jobId }),
+        history: () => navTo({ name: 'job', jobId: view.jobId }),
+        notes: () => navTo({ name: 'job', jobId: view.jobId }),
+        task: () => navTo({ name: 'job', jobId: view.jobId }),
+      }[view.name]
 
   return (
     <>
-      <Screen {...chrome} {...titles[view.name]} onBack={back}>
-        <div className="mb-3 flex justify-end">
-          <SyncBadge status={sync} pending={pending} />
-        </div>
-        <InstallPrompt />
+      <Screen
+        {...titles[view.name]}
+        largeTitle={isRoot}
+        onBack={back}
+        animation={anim}
+        scrollKey={`${view.name}:${view.jobId ?? ''}:${view.taskId ?? ''}`}
+        tabs={isRoot ? tabs : undefined}
+        currentTab={view.name}
+        onSelectTab={(key) => navTo({ name: key })}
+        actions={<SyncBadge status={sync} pending={pending} />}
+      >
         {notice && (
           <div className="mb-3 rounded-xl bg-[color:var(--status-warning-bg)] px-3 py-2 text-[13px] text-[color:var(--status-warning)]">
             {notice}{' '}

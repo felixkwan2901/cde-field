@@ -1,4 +1,4 @@
-import { ChevronRight, FileText } from 'lucide-react'
+import { ChevronRight } from 'lucide-react'
 import ProgressRing from '../components/ProgressRing'
 import { SkeletonRows } from '../components/EmptyState'
 import { crewActivity, lastTouched } from '../lib/crewActivity'
@@ -9,16 +9,21 @@ import { relativeTime, initials } from '../lib/format'
 //
 // A manager is not running a job — they are asking who is out there, what
 // each of them has actually recorded, and what has gone quiet. Jobs are the
-// second question, so they sit below.
+// second question, which is why they are now a second tab rather than a
+// second scroll: eighteen crew above four jobs meant the jobs were below
+// the fold on every phone, and a manager checking a job first had to scroll
+// past everybody to reach it.
 //
 // No map here. Knowing where a site is matters when you are driving to it;
 // from a desk the useful thing is the list.
-export default function ManagerScreen({ jobs, roster, loading, onOpenJob, onOpenReport }) {
+export default function ManagerScreen({ section, jobs, roster, loading, onOpenJob }) {
   if (loading) return <SkeletonRows count={4} />
 
   const crew = crewActivity(jobs, roster)
   const active = crew.filter((p) => p.last)
   const quiet = jobs.filter((j) => !lastTouched(j))
+
+  if (section === 'jobs') return <JobsSection jobs={jobs} onOpenJob={onOpenJob} />
 
   return (
     <>
@@ -28,23 +33,14 @@ export default function ManagerScreen({ jobs, roster, loading, onOpenJob, onOpen
           <Figure value={jobs.length - quiet.length} label="Jobs moving" />
           <Figure value={quiet.length} label="Nothing recorded" tone={quiet.length ? 'warn' : undefined} />
         </div>
-        <button
-          onClick={onOpenReport}
-          className="tap pressable mt-4 flex w-full items-center justify-center gap-2 rounded-[var(--radius-control)] bg-[color:var(--surface-2)] text-[15px]"
-        >
-          <FileText size={17} aria-hidden="true" />
-          Meeting report
-        </button>
       </div>
 
-      <h2 className="mb-2 text-[12px] font-semibold uppercase tracking-wide text-[color:var(--text-muted)]">
-        Crew
-      </h2>
-      <ul className="card mb-6 overflow-hidden">
+      <p className="list-label">Crew</p>
+      <ul className="list-group">
         {crew.map((person) => (
           <li
             key={person.name}
-            className="flex items-center gap-3 border-b border-[color:var(--border)] px-4 py-3.5 last:border-b-0"
+            className="list-row"
           >
             <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[color:var(--surface-2)] text-[13px] font-medium">
               {initials(person.name)}
@@ -70,9 +66,14 @@ export default function ManagerScreen({ jobs, roster, loading, onOpenJob, onOpen
         ))}
       </ul>
 
-      <h2 className="mb-2 text-[12px] font-semibold uppercase tracking-wide text-[color:var(--text-muted)]">
-        Jobs, least recently updated
-      </h2>
+    </>
+  )
+}
+
+function JobsSection({ jobs, onOpenJob }) {
+  return (
+    <>
+      <p className="list-label">Least recently updated first</p>
       <ul className="flex flex-col gap-2">
         {[...jobs]
           .sort((a, b) => {

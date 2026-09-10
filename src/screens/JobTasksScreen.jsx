@@ -93,17 +93,20 @@ export default function JobTasksScreen({ job, onOpenTask, onOpenInfo, onOpenHist
           body="Nobody has set the task list for this job. It'll appear here once they do."
         />
       ) : (
+        // One card per area with hairline-divided rows, rather than a
+        // separate card per task. Fifteen floating cards is fifteen shadows
+        // and fourteen gaps of dead space to scroll past; grouping them
+        // makes the area the object on screen and the tasks its contents,
+        // which is also what the heading has been claiming all along.
         [...areas].map(([area, tasks]) => (
           <section key={area} className="mb-5">
-            <h2 className="mb-2 text-[12px] font-semibold uppercase tracking-wide text-[color:var(--text-muted)]">
-              {area}
-            </h2>
-            <ul className="flex flex-col gap-2">
+            <p className="list-label">{area}</p>
+            <ul className="list-group">
               {tasks.map((task) => (
                 <li key={task.id}>
                   <button
                     onClick={() => onOpenTask(task.id)}
-                    className="card pressable flex w-full items-center gap-3 px-3 py-3 text-left"
+                    className="list-row"
                   >
                     <div className="min-w-0 flex-1">
                       <p className="flex items-start gap-2 text-[15px] leading-snug">
