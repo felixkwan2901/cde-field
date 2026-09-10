@@ -1,4 +1,5 @@
 import { ChevronRight, History, MapPin, MessageSquare } from 'lucide-react'
+import ProgressRing from '../components/ProgressRing'
 import ProgressBar from '../components/ProgressBar'
 import TaskStatus from '../components/TaskStatus'
 import EmptyState from '../components/EmptyState'
@@ -19,17 +20,14 @@ export default function JobTasksScreen({ job, onOpenTask, onOpenInfo, onOpenHist
 
   return (
     <>
-      <div className="mb-6">
-        <div className="flex items-end justify-between gap-4 pb-2">
+      <div className="card mb-6 p-4">
+        <div className="flex items-center gap-4">
+          <ProgressRing progress={progress} size={84} />
           <div className="min-w-0">
-            <p className="truncate text-md font-medium leading-tight">{job.jobName}</p>
-            <p className="mt-1 text-sm text-ink-2">{progressCaption(progress)}</p>
+            <p className="text-sm font-medium leading-tight">{job.jobName}</p>
+            <p className="mt-1 text-xs text-ink-2">{progressCaption(progress)}</p>
           </div>
-          <span className="figure text-2xl">
-            {progress.state === 'no-data' ? <span className="text-ink-2">—</span> : `${progress.percent}%`}
-          </span>
         </div>
-        <ProgressBar pct={progress.state === 'no-data' ? null : progress.percent} />
         {/* The address strip doubles as the door to the info screen. It is a
             row you glance at anyway, so the common case costs no taps and no
             extra screen space, and the rare case costs one tap where your
@@ -38,10 +36,10 @@ export default function JobTasksScreen({ job, onOpenTask, onOpenInfo, onOpenHist
             else. */}
         <button
           onClick={onOpenInfo}
-          className="tap flex w-full items-center gap-2 border-b border-line text-left"
+          className="tap pressable mt-4 flex w-full items-center gap-2 rounded-sm bg-surface-2 px-4 py-2 text-left"
         >
           <MapPin size={18} className="shrink-0 text-ink-2" aria-hidden="true" />
-          <span className="min-w-0 flex-1 truncate text-sm">{job.site.address}</span>
+          <span className="min-w-0 flex-1 truncate text-xs">{job.site.address}</span>
           <ChevronRight size={18} className="shrink-0 text-ink-2" aria-hidden="true" />
         </button>
 
@@ -51,7 +49,7 @@ export default function JobTasksScreen({ job, onOpenTask, onOpenInfo, onOpenHist
             looking — which is the people who need it least. */}
         <button
           onClick={onOpenNotes}
-          className="tap flex w-full items-start gap-2 border-b border-line py-4 text-left"
+          className="tap pressable mt-4 flex w-full items-start gap-2 rounded-sm bg-surface-2 px-4 py-2 text-left"
         >
           <MessageSquare size={18} className="mt-1 shrink-0 text-ink-2" aria-hidden="true" />
           <span className="min-w-0 flex-1">
@@ -76,7 +74,7 @@ export default function JobTasksScreen({ job, onOpenTask, onOpenInfo, onOpenHist
             is the difference between "worth a look" and "nothing here". */}
         <button
           onClick={onOpenHistory}
-          className="tap flex w-full items-center gap-2 border-b border-line text-left"
+          className="tap pressable mt-2 flex w-full items-center gap-2 rounded-sm bg-surface-2 px-4 py-2 text-left"
         >
           <History size={18} className="shrink-0 text-ink-2" aria-hidden="true" />
           <span className="min-w-0 flex-1 truncate text-xs">
@@ -95,39 +93,49 @@ export default function JobTasksScreen({ job, onOpenTask, onOpenInfo, onOpenHist
           body="Nobody has set the task list for this job. It'll appear here once they do."
         />
       ) : (
-        // Full-bleed rows under a plain area label, not a card per task and
-        // not a card per area. Fifteen tasks used to be fifteen rounded
-        // rectangles with a shadow each: thirty drawn edges to express one
-        // list. A hairline does the same job with one.
+        // One card per area with hairline-divided rows, rather than a
+        // separate card per task. Fifteen floating cards is fifteen shadows
+        // and fourteen gaps of dead space to scroll past; grouping them
+        // makes the area the object on screen and the tasks its contents,
+        // which is also what the heading has been claiming all along.
         [...areas].map(([area, tasks]) => (
           <section key={area} className="mb-6">
-            <p className="rows-label">{area}</p>
-            <ul className="rows">
+            <p className="list-label">{area}</p>
+            <ul className="list-group">
               {tasks.map((task) => (
                 <li key={task.id}>
-                  <button onClick={() => onOpenTask(task.id)} className="row flex-col !gap-2">
-                    <span className="flex w-full items-start gap-4">
-                      <span className="flex min-w-0 flex-1 items-start gap-2 text-sm leading-snug">
+                  <button
+                    onClick={() => onOpenTask(task.id)}
+                    className="list-row"
+                  >
+                    {/* The label can run to two lines at 16px, so the
+                        percentage aligns to the top of the row rather than to
+                        its middle — centred, it drifted below the name it
+                        belongs to as soon as the name wrapped. */}
+                    <div className="min-w-0 flex-1">
+                      <p className="flex items-start gap-2 text-sm leading-snug">
                         {/* mt-1.5 is optical, not layout: it seats a 10px
                             dot on a 16px baseline. */}
                         <span className="mt-1.5">
                           <TaskStatus task={task} />
                         </span>
                         <span className="min-w-0">{task.name}</span>
-                      </span>
-                      <span className="figure shrink-0 text-lg">
-                        {task.na ? <span className="text-sm text-ink-2">N/A</span>
-                          : typeof task.pct === 'number' ? `${task.pct}%`
-                          : <span className="text-ink-2">—</span>}
-                      </span>
-                      <ChevronRight size={20} className="mt-1 shrink-0 text-ink-2" aria-hidden="true" />
+                      </p>
+                      <div className="mt-2">
+                        <ProgressBar pct={task.pct} na={task.na} />
+                      </div>
+                      {task.updatedBy && (
+                        <p className="mt-1 truncate text-xs text-ink-2">
+                          {task.updatedBy} · {relativeTime(task.updatedAt)}
+                        </p>
+                      )}
+                    </div>
+                    <span className="w-16 shrink-0 self-start pt-px text-right text-lg font-medium tabular-nums">
+                      {task.na ? <span className="text-xs text-ink-2">N/A</span>
+                        : typeof task.pct === 'number' ? `${task.pct}%`
+                        : <span className="text-ink-2">—</span>}
                     </span>
-                    <ProgressBar pct={task.pct} na={task.na} />
-                    {task.updatedBy && (
-                      <span className="block w-full truncate text-xs text-ink-2">
-                        {task.updatedBy} · {relativeTime(task.updatedAt)}
-                      </span>
-                    )}
+                    <ChevronRight size={18} className="shrink-0 self-start pt-1 text-ink-2" aria-hidden="true" />
                   </button>
                 </li>
               ))}

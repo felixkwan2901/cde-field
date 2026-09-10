@@ -65,7 +65,7 @@ export default function InstallPrompt() {
   if (!deferred && !showIosHint) return null
 
   return (
-    <div className="mb-4 flex items-start gap-2 rounded-lg border border-line p-4">
+    <div className="card mb-4 flex items-start gap-2 p-4">
       <div className="min-w-0 flex-1">
         <p className="text-xs font-medium">Add to your home screen</p>
         {deferred ? (

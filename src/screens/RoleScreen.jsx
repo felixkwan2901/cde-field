@@ -18,7 +18,7 @@ export default function RoleScreen({ onPick }) {
       <div className="flex flex-col gap-2">
         <button
           onClick={() => onPick('worker')}
-          className="pressable flex items-center gap-4 rounded-lg border border-line p-4 text-left"
+          className="card pressable flex items-center gap-4 p-4 text-left"
         >
           <HardHat size={26} className="shrink-0 text-accent" aria-hidden="true" />
           <span>
@@ -31,7 +31,7 @@ export default function RoleScreen({ onPick }) {
 
         <button
           onClick={() => onPick('manager')}
-          className="pressable flex items-center gap-4 rounded-lg border border-line p-4 text-left"
+          className="card pressable flex items-center gap-4 p-4 text-left"
         >
           <ClipboardList size={26} className="shrink-0 text-accent" aria-hidden="true" />
           <span>

@@ -1,6 +1,6 @@
 import { Camera, StickyNote } from 'lucide-react'
 import PercentChips from '../components/PercentChips'
-import ProgressBar from '../components/ProgressBar'
+import ProgressRing from '../components/ProgressRing'
 import TaskStatus from '../components/TaskStatus'
 import { relativeTime } from '../lib/format'
 
@@ -19,32 +19,29 @@ export default function TaskDetailScreen({ task, position, total, history = [], 
           lands on first — at arm's length in sun a figure floating in space
           reads as text among text, where a filled arc is a shape you take in
           before you read anything. */}
-      {/* The figure, at the size of the thing it is. This screen exists to
-          show and change one number; putting it at 76px and giving it the
-          top of the screen says so, and it is the only element here that
-          can be read from a ladder without bringing the phone closer. */}
-      <div className="my-6">
+      <div className="card my-6 flex flex-col items-center gap-2 px-4 py-6">
         {task.na ? (
-          <div className="py-4">
+          <>
             <p className="text-lg font-medium text-ink-2">Not applicable</p>
-            <p className="mt-1 text-sm text-ink-2">
+            <p className="text-xs text-ink-2">
               Excluded from this job&apos;s percentage
             </p>
-          </div>
-        ) : (
-          <>
-            <div className="flex items-baseline justify-between gap-4 pb-4">
-              <span className="figure text-3xl">
-                {typeof task.pct === 'number' ? task.pct : 0}
-                <span className="text-xl text-ink-2">%</span>
-              </span>
-              <TaskStatus task={task} showLabel />
-            </div>
-            <ProgressBar pct={typeof task.pct === 'number' ? task.pct : 0} />
           </>
+        ) : (
+          <ProgressRing
+            progress={{
+              state: typeof task.pct !== 'number' ? 'zero' : task.pct === 0 ? 'zero' : task.pct >= 100 ? 'complete' : 'progress',
+              percent: typeof task.pct === 'number' ? task.pct : 0,
+              started: 0,
+              total: 1,
+            }}
+            size={132}
+            stroke={11}
+          />
         )}
+        {!task.na && <TaskStatus task={task} showLabel />}
         {task.updatedBy && !task.na && (
-          <p className="mt-2 text-xs text-ink-2">
+          <p className="text-xs text-ink-2">
             Set by {task.updatedBy}, {relativeTime(task.updatedAt)}
           </p>
         )}
@@ -54,7 +51,7 @@ export default function TaskDetailScreen({ task, position, total, history = [], 
 
       <button
         onClick={onToggleNa}
-        className="tap mt-4 flex w-full items-center justify-center rounded-sm border border-line text-sm text-ink-2"
+        className="tap pressable mt-4 flex w-full items-center justify-center rounded-sm bg-surface-2 text-xs text-ink-2"
       >
         {task.na ? 'This job does need it' : "Doesn't apply to this job"}
       </button>
@@ -84,7 +81,7 @@ export default function TaskDetailScreen({ task, position, total, history = [], 
               for the rear camera directly, so on a phone this opens the
               camera rather than a file browser — which is the difference
               between a demo people believe and one they don't. */}
-          <label className="tap pressable flex cursor-pointer items-center justify-center gap-2 rounded-sm border border-line text-sm">
+          <label className="tap pressable card flex cursor-pointer items-center justify-center gap-2 text-sm">
             <Camera size={18} aria-hidden="true" /> Add photo
             <input
               type="file"
@@ -105,7 +102,7 @@ export default function TaskDetailScreen({ task, position, total, history = [], 
               tasks is a note nobody finds. */}
           <button
             onClick={onOpenNotes}
-            className="tap pressable flex items-center justify-center gap-2 rounded-sm border border-line text-sm"
+            className="tap pressable card flex items-center justify-center gap-2 text-sm"
           >
             <StickyNote size={18} aria-hidden="true" /> Handover notes
           </button>
@@ -127,7 +124,7 @@ export default function TaskDetailScreen({ task, position, total, history = [], 
           <h3 className="mb-2 text-xs font-medium text-ink-2">
             History
           </h3>
-          <ul className="rows">
+          <ul className="card overflow-hidden">
             {history.map((entry, i) => (
               <li
                 key={`${entry.at}-${i}`}
