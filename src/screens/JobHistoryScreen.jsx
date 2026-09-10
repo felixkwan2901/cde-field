@@ -64,7 +64,7 @@ export default function JobHistoryScreen({ job }) {
               </span>
             )}
           </div>
-          <ul className="card overflow-hidden">
+          <ul className="rows">
             {group.entries.map((entry, i) => (
               <li
                 key={`${entry.at}-${i}`}

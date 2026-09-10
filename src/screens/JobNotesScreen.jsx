@@ -30,7 +30,7 @@ export default function JobNotesScreen({ job, onAddNote, saving }) {
 
   return (
     <>
-      <form onSubmit={submit} className="card mb-6 p-4">
+      <form onSubmit={submit} className="mb-6 rounded-lg border border-line p-4">
         <textarea
           value={text}
           onChange={(e) => setText(e.target.value.slice(0, LIMIT))}
@@ -69,7 +69,7 @@ export default function JobNotesScreen({ job, onAddNote, saving }) {
           body="The first one is usually the most useful."
         />
       ) : (
-        <ul className="card overflow-hidden">
+        <ul className="rows">
           {notes.map((note, i) => (
             <li
               key={`${note.at}-${i}`}

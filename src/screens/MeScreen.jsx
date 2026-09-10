@@ -12,7 +12,7 @@ import { initials } from '../lib/format'
 export default function MeScreen({ staff, role, theme, onToggleTheme, onSwitchStaff, onSwitchRole }) {
   return (
     <>
-      <div className="card mb-6 flex items-center gap-2 p-4">
+      <div className="mb-6 flex items-center gap-4 border-b border-line pb-6">
         <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-surface-2 text-md font-medium">
           {initials(staff.name)}
         </span>
@@ -26,9 +26,9 @@ export default function MeScreen({ staff, role, theme, onToggleTheme, onSwitchSt
 
       <InstallPrompt />
 
-      <p className="list-label">Settings</p>
-      <div className="list-group mb-6">
-        <button className="list-row" onClick={onToggleTheme}>
+      <p className="rows-label !pt-0">Settings</p>
+      <div className="rows mb-6">
+        <button className="row items-center" onClick={onToggleTheme}>
           {theme === 'dark' ? <Sun size={20} aria-hidden="true" /> : <Moon size={20} aria-hidden="true" />}
           <span className="min-w-0 flex-1">
             <span className="block text-sm font-medium">
@@ -42,7 +42,7 @@ export default function MeScreen({ staff, role, theme, onToggleTheme, onSwitchSt
           </span>
         </button>
 
-        <button className="list-row" onClick={onSwitchRole}>
+        <button className="row items-center" onClick={onSwitchRole}>
           {role === 'manager' ? (
             <HardHat size={20} aria-hidden="true" />
           ) : (
@@ -58,7 +58,7 @@ export default function MeScreen({ staff, role, theme, onToggleTheme, onSwitchSt
           </span>
         </button>
 
-        <button className="list-row" onClick={onSwitchStaff}>
+        <button className="row items-center" onClick={onSwitchStaff}>
           <LogOut size={20} aria-hidden="true" />
           <span className="min-w-0 flex-1">
             <span className="block text-sm font-medium">Not you? Switch name</span>
@@ -69,9 +69,9 @@ export default function MeScreen({ staff, role, theme, onToggleTheme, onSwitchSt
         </button>
       </div>
 
-      <p className="list-label">About</p>
-      <div className="list-group">
-        <div className="list-row">
+      <p className="rows-label">About</p>
+      <div className="rows">
+        <div className="row">
           <Info size={20} aria-hidden="true" className="text-ink-2" />
           <span className="min-w-0 flex-1 text-xs leading-relaxed text-ink-2">
             Prototype. Progress you record and the staff list are real and shared; the jobs,

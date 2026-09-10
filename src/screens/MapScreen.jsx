@@ -35,10 +35,10 @@ export default function MapScreen({ jobs, loading, onOpenJob }) {
         <JobMap jobs={placeable} onOpenJob={onOpenJob} height={400} bleed />
       </div>
 
-      <p className="list-label mt-6">Sites</p>
-      <div className="list-group">
+      <p className="rows-label">Sites</p>
+      <div className="rows">
         {placeable.map((job) => (
-          <button key={job.id} className="list-row" onClick={() => onOpenJob(job.id)}>
+          <button key={job.id} className="row items-center" onClick={() => onOpenJob(job.id)}>
             <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-surface-2">
               <MapPin size={17} aria-hidden="true" className="text-ink-2" />
             </span>

@@ -35,10 +35,10 @@ export default function StaffPickerScreen({ staff, loading, role, onPick }) {
         // seventeen gaps — about a screen and a half of nothing to scroll
         // through before you reach the Ss. One grouped list is how a phone
         // shows a list of people, and it fits far more of them at once.
-        <ul className="list-group">
+        <ul className="rows">
           {staff.map((person) => (
             <li key={person.id}>
-              <button onClick={() => onPick(person)} className="list-row">
+              <button onClick={() => onPick(person)} className="row items-center">
                 <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-surface-2 text-xs font-medium">
                   {initials(person.name)}
                 </span>

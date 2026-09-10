@@ -1,5 +1,5 @@
 import { ChevronRight } from 'lucide-react'
-import ProgressRing from '../components/ProgressRing'
+import ProgressBar from '../components/ProgressBar'
 import { SkeletonRows } from '../components/EmptyState'
 import { crewActivity, lastTouched } from '../lib/crewActivity'
 import { jobProgress, progressCaption } from '../lib/progress'
@@ -27,7 +27,7 @@ export default function ManagerScreen({ section, jobs, roster, loading, onOpenJo
 
   return (
     <>
-      <div className="card mb-6 p-4">
+      <div className="mb-6 border-b border-line pb-6">
         <div className="grid grid-cols-3 gap-2 text-center">
           <Figure value={`${active.length}/${crew.length}`} label="Crew recording" />
           <Figure value={jobs.length - quiet.length} label="Jobs moving" />
@@ -35,12 +35,12 @@ export default function ManagerScreen({ section, jobs, roster, loading, onOpenJo
         </div>
       </div>
 
-      <p className="list-label">Crew</p>
-      <ul className="list-group">
+      <p className="rows-label !pt-0">Crew</p>
+      <ul className="rows">
         {crew.map((person) => (
           <li
             key={person.name}
-            className="list-row"
+            className="row items-center"
           >
             <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-surface-2 text-xs font-medium">
               {initials(person.name)}
@@ -73,8 +73,8 @@ export default function ManagerScreen({ section, jobs, roster, loading, onOpenJo
 function JobsSection({ jobs, onOpenJob }) {
   return (
     <>
-      <p className="list-label">Least recently updated first</p>
-      <ul className="flex flex-col gap-2">
+      <p className="rows-label !pt-0">Least recently updated first</p>
+      <ul className="rows">
         {[...jobs]
           .sort((a, b) => {
             const at = lastTouched(a)
@@ -89,30 +89,33 @@ function JobsSection({ jobs, onOpenJob }) {
             const touched = lastTouched(job)
             return (
               <li key={job.id}>
-                <button
-                  onClick={() => onOpenJob(job.id)}
-                  className="card pressable flex w-full items-center gap-2 p-4 text-left"
-                >
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-medium">
-                      <span className="text-ink-2">{job.jobNumber}</span>{' '}
-                      {job.jobName}
-                    </p>
-                    <p className="truncate text-xs text-ink-2">
-                      {progressCaption(progress)}
-                    </p>
-                    <p className="truncate text-xs">
-                      {touched ? (
-                        <span className="text-ink-2">
-                          Last update {relativeTime(new Date(touched).toISOString())}
-                        </span>
-                      ) : (
-                        <span className="text-warn">Nothing recorded yet</span>
-                      )}
-                    </p>
-                  </div>
-                  <ProgressRing progress={progress} size={54} stroke={6} />
-                  <ChevronRight size={20} className="shrink-0 text-ink-2" aria-hidden="true" />
+                <button onClick={() => onOpenJob(job.id)} className="row flex-col !gap-2">
+                  <span className="flex w-full items-start gap-4">
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate text-md font-medium">
+                        <span className="text-ink-2">{job.jobNumber}</span> {job.jobName}
+                      </span>
+                      <span className="mt-1 block truncate text-sm text-ink-2">
+                        {progressCaption(progress)}
+                      </span>
+                    </span>
+                    <span className="figure shrink-0 text-lg">
+                      {progress.state === 'no-data'
+                        ? <span className="text-ink-2">—</span>
+                        : `${progress.percent}%`}
+                    </span>
+                    <ChevronRight size={20} className="mt-1 shrink-0 text-ink-2" aria-hidden="true" />
+                  </span>
+                  <ProgressBar pct={progress.state === 'no-data' ? null : progress.percent} />
+                  <span className="block w-full truncate text-xs">
+                    {touched ? (
+                      <span className="text-ink-2">
+                        Last update {relativeTime(new Date(touched).toISOString())}
+                      </span>
+                    ) : (
+                      <span className="text-warn">Nothing recorded yet</span>
+                    )}
+                  </span>
                 </button>
               </li>
             )
@@ -126,12 +129,12 @@ function Figure({ value, label, tone }) {
   return (
     <div>
       <p
-        className="text-xl font-medium tabular-nums"
+        className="figure text-xl"
         style={tone === 'warn' ? { color: 'var(--status-warning)' } : undefined}
       >
         {value}
       </p>
-      <p className="text-xs leading-tight text-ink-2">{label}</p>
+      <p className="mt-1 text-xs leading-tight text-ink-2">{label}</p>
     </div>
   )
 }

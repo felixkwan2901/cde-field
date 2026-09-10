@@ -76,7 +76,7 @@ export default function JobMap({ jobs, onOpenJob, height = 220, bleed = false })
 
   if (placeable.length === 0) {
     return (
-      <div className="card px-4 py-6 text-center text-xs text-ink-2">
+      <div className="rounded-lg border border-line px-4 py-6 text-center text-sm text-ink-2">
         No sites to map yet — jobs need an address before they can be placed.
       </div>
     )
@@ -85,7 +85,7 @@ export default function JobMap({ jobs, onOpenJob, height = 220, bleed = false })
   // Full-bleed drops the card's radius and shadow with it: a rounded
   // corner only makes sense on something with an edge on screen.
   return (
-    <div className={bleed ? 'overflow-hidden' : 'card overflow-hidden'}>
+    <div className={bleed ? 'overflow-hidden' : 'overflow-hidden rounded-lg border border-line'}>
       <div ref={holder} style={{ height }} aria-label="Map of job sites" role="img" />
     </div>
   )
