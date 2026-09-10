@@ -26,6 +26,7 @@
 
 @theme inline {
   --color-page: var(--page-plane);
+  --color-plate: var(--brand-plate);
   --color-surface: var(--surface-1);
   --color-surface-2: var(--surface-2);
   --color-ink: var(--text-primary);
@@ -75,6 +76,12 @@
      which survive sunlight and greyscale in a way a third grey does not. */
   --text-primary: #17212b;
   --text-secondary: #465059;
+
+  /* The one colour that does not flip with the theme. The company mark is
+     white and green on transparency, so the white half disappears on a
+     light ground — it needs a dark plate behind it in both themes, the way
+     an app icon has a fixed background whatever the wallpaper. */
+  --brand-plate: #17212b;
 
   /* Accent. The dashboard's green (#38b86a, hue 143) taken down in
      lightness until it clears AAA as text on white; the hue is unchanged,
