@@ -66,6 +66,9 @@ async function mergeRecordedProgress(job) {
   if (!record?.tasks) return job
   return {
     ...job,
+    // Carried through so the job screen can show who changed what. Newest
+    // first, because a history is read from the top.
+    history: [...(record.log ?? [])].reverse(),
     tasks: job.tasks.map((task) => {
       const saved = record.tasks[task.id]
       return saved ? { ...task, pct: saved.pct, na: !!saved.na, updatedBy: saved.by, updatedAt: saved.at } : task
@@ -102,9 +105,15 @@ export async function setTaskPercent({ jobNumber, taskId, pct, na = false, by })
     updatedAt: at,
     tasks: { ...(record?.tasks ?? {}), [taskId]: { pct, na, by, at } },
     // A bounded ring buffer, so a job worked on all year cannot grow the
-    // record without limit. Fifty is enough to answer "who moved this and
-    // when" and nowhere near the Worker's 100,000-character cap.
-    log: [...(record?.log ?? []), { t: taskId, from: previous, to: pct, by, at }].slice(-50),
+    // record without limit.
+    //
+    // Two hundred rather than fifty, now that the history is actually shown:
+    // a job with twenty tasks and three people revisiting them is through
+    // fifty entries in a fortnight, and the whole point of the log is
+    // answering "who moved this, and when" months later. An entry is about
+    // 110 bytes, so two hundred is roughly 22KB against the Worker's
+    // 100,000-character cap — still comfortable alongside the tasks.
+    log: [...(record?.log ?? []), { t: taskId, from: previous, to: pct, na, by, at }].slice(-200),
   }
 
   await writeKey(key, next)

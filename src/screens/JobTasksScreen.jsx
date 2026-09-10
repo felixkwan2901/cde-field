@@ -1,4 +1,4 @@
-import { ChevronRight, MapPin } from 'lucide-react'
+import { ChevronRight, History, MapPin } from 'lucide-react'
 import ProgressRing from '../components/ProgressRing'
 import ProgressBar from '../components/ProgressBar'
 import TaskStatus from '../components/TaskStatus'
@@ -6,7 +6,7 @@ import EmptyState from '../components/EmptyState'
 import { jobProgress, progressCaption } from '../lib/progress'
 import { relativeTime } from '../lib/format'
 
-export default function JobTasksScreen({ job, onOpenTask, onOpenInfo }) {
+export default function JobTasksScreen({ job, onOpenTask, onOpenInfo, onOpenHistory }) {
   const progress = jobProgress(job.tasks)
 
   // Grouped by area with a plain label, not a collapsible section. Folding
@@ -40,6 +40,23 @@ export default function JobTasksScreen({ job, onOpenTask, onOpenInfo }) {
         >
           <MapPin size={18} className="shrink-0 text-[color:var(--text-muted)]" aria-hidden="true" />
           <span className="min-w-0 flex-1 truncate text-[14px]">{job.site.address}</span>
+          <ChevronRight size={18} className="shrink-0 text-[color:var(--text-muted)]" aria-hidden="true" />
+        </button>
+
+        {/* Several people work one job, so a percentage on its own does not
+            say who moved it or when. The count is on the button because it
+            is the difference between "worth a look" and "nothing here". */}
+        <button
+          onClick={onOpenHistory}
+          className="tap pressable mt-2 flex w-full items-center gap-2 rounded-[var(--radius-control)] bg-[color:var(--surface-2)] px-3 py-2 text-left"
+        >
+          <History size={18} className="shrink-0 text-[color:var(--text-muted)]" aria-hidden="true" />
+          <span className="min-w-0 flex-1 truncate text-[14px]">
+            History
+            {job.history?.length ? (
+              <span className="text-[color:var(--text-muted)]"> · {job.history.length} change{job.history.length === 1 ? '' : 's'}</span>
+            ) : null}
+          </span>
           <ChevronRight size={18} className="shrink-0 text-[color:var(--text-muted)]" aria-hidden="true" />
         </button>
       </div>

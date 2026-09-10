@@ -11,6 +11,7 @@ import TodayScreen from './screens/TodayScreen'
 import JobTasksScreen from './screens/JobTasksScreen'
 import TaskDetailScreen from './screens/TaskDetailScreen'
 import JobInfoScreen from './screens/JobInfoScreen'
+import JobHistoryScreen from './screens/JobHistoryScreen'
 import { getJob, listAllJobs, listJobsForStaff, listStaff, setTaskPercent, addAttachment } from './lib/dataSource'
 import { readStaff, writeStaff } from './lib/identity'
 import { applyTheme, readTheme } from './lib/theme'
@@ -146,7 +147,9 @@ export default function App() {
       if (justSaved || pending > 0) return
       getJob(openJobId).then((fresh) => {
         if (!fresh) return
-        setJobs((prev) => prev.map((j) => (j.id === fresh.id ? { ...j, tasks: fresh.tasks } : j)))
+        setJobs((prev) =>
+          prev.map((j) => (j.id === fresh.id ? { ...j, tasks: fresh.tasks, history: fresh.history } : j)),
+        )
       })
     }, 15000)
     return () => clearInterval(interval)
@@ -169,6 +172,7 @@ export default function App() {
   }
 
   async function saveTask(nextTask, { pct, na }, previous) {
+    const at = new Date().toISOString()
     setJobs((prev) =>
       prev.map((j) =>
         j.id !== job.id
@@ -176,16 +180,23 @@ export default function App() {
           : {
               ...j,
               tasks: j.tasks.map((t) =>
-                t.id !== nextTask.id
-                  ? t
-                  : { ...t, pct, na, updatedBy: staff.name, updatedAt: new Date().toISOString() },
+                t.id !== nextTask.id ? t : { ...t, pct, na, updatedBy: staff.name, updatedAt: at },
               ),
+              // The history is updated optimistically too, not just the task.
+              // Without this you could set a percentage, open History, and
+              // not find your own change — it was written, but the screen was
+              // still showing the record as it was fetched. The real entry
+              // replaces this one on the next read.
+              history: [
+                { t: nextTask.id, from: previous.na ? null : previous.pct, to: pct, na, by: staff.name, at },
+                ...(j.history ?? []),
+              ],
             },
       ),
     )
     setUndo({ taskId: nextTask.id, previous, label: na ? 'Marked not applicable' : `Set to ${pct}%` })
 
-    const op = { jobNumber: job.jobNumber, taskId: nextTask.id, pct, na, by: staff.name, at: new Date().toISOString() }
+    const op = { jobNumber: job.jobNumber, taskId: nextTask.id, pct, na, by: staff.name, at }
     if (!navigator.onLine) {
       setPending((await enqueue(op)).length)
       setSync('offline')
@@ -263,10 +274,12 @@ export default function App() {
           job={job}
           onOpenTask={(taskId) => setView({ name: 'task', jobId: job.id, taskId })}
           onOpenInfo={() => setView({ name: 'info', jobId: job.id })}
+          onOpenHistory={() => setView({ name: 'history', jobId: job.id })}
         />
       )
     }
     if (view.name === 'info') return <JobInfoScreen job={job} />
+    if (view.name === 'history') return <JobHistoryScreen job={job} />
     if (view.name === 'task' && task) {
       return (
         <TaskDetailScreen
@@ -292,6 +305,7 @@ export default function App() {
         : { title: 'Today', subtitle: staff.name },
     job: { title: job ? `${job.jobNumber} ${job.jobName}` : 'Job' },
     info: { title: 'Job info', subtitle: job?.jobName },
+    history: { title: 'History', subtitle: job?.jobName },
     report: { title: 'Meeting report', subtitle: 'Field progress' },
     task: { title: job ? job.jobName : 'Task' },
   }
@@ -299,6 +313,7 @@ export default function App() {
     today: null,
     job: () => setView({ name: 'today' }),
     info: () => setView({ name: 'job', jobId: view.jobId }),
+    history: () => setView({ name: 'job', jobId: view.jobId }),
     report: () => setView({ name: 'today' }),
     task: () => setView({ name: 'job', jobId: view.jobId }),
   }[view.name]
