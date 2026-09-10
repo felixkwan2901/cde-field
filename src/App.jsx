@@ -298,7 +298,7 @@ export default function App() {
       )
     }
     if (view.name === 'info') return <JobInfoScreen job={job} />
-    if (view.name === 'history') return <JobHistoryScreen job={job} taskId={view.taskId} />
+    if (view.name === 'history') return <JobHistoryScreen job={job} />
     if (view.name === 'notes')
       return <JobNotesScreen job={job} onAddNote={saveNote} saving={sync === 'saving'} />
     if (view.name === 'task' && task) {
@@ -311,12 +311,9 @@ export default function App() {
           onToggleNa={() =>
             saveTask(task, { pct: task.na ? task.pct : null, na: !task.na }, { pct: task.pct, na: task.na })
           }
-          changes={(job.history ?? []).filter((e) => e.t === task.id).length}
+          history={(job.history ?? []).filter((e) => e.t === task.id)}
           onAttachPhoto={attachPhoto}
           onOpenNotes={() => setView({ name: 'notes', jobId: job.id })}
-          onOpenHistory={() =>
-            setView({ name: 'history', jobId: job.id, taskId: task.id, from: 'task' })
-          }
         />
       )
     }
@@ -330,10 +327,7 @@ export default function App() {
         : { title: 'Today', subtitle: staff.name },
     job: { title: job ? `${job.jobNumber} ${job.jobName}` : 'Job' },
     info: { title: 'Job info', subtitle: job?.jobName },
-    history: {
-      title: 'History',
-      subtitle: view.taskId ? job?.tasks.find((t) => t.id === view.taskId)?.name : job?.jobName,
-    },
+    history: { title: 'History', subtitle: job?.jobName },
     notes: { title: 'Handover notes', subtitle: job?.jobName },
     report: { title: 'Meeting report', subtitle: 'Field progress' },
     task: { title: job ? job.jobName : 'Task' },
@@ -342,12 +336,7 @@ export default function App() {
     today: null,
     job: () => setView({ name: 'today' }),
     info: () => setView({ name: 'job', jobId: view.jobId }),
-    // Back to wherever you came from — the task if you tapped through from
-    // it, the job list otherwise.
-    history: () =>
-      view.from === 'task'
-        ? setView({ name: 'task', jobId: view.jobId, taskId: view.taskId })
-        : setView({ name: 'job', jobId: view.jobId }),
+    history: () => setView({ name: 'job', jobId: view.jobId }),
     notes: () => setView({ name: 'job', jobId: view.jobId }),
     report: () => setView({ name: 'today' }),
     task: () => setView({ name: 'job', jobId: view.jobId }),

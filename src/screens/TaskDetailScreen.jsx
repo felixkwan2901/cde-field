@@ -1,4 +1,4 @@
-import { Camera, ChevronRight, StickyNote } from 'lucide-react'
+import { Camera, StickyNote } from 'lucide-react'
 import PercentChips from '../components/PercentChips'
 import ProgressRing from '../components/ProgressRing'
 import TaskStatus from '../components/TaskStatus'
@@ -7,7 +7,7 @@ import { relativeTime } from '../lib/format'
 // The screen the demo lives or dies on. Top to bottom: what it is, what it
 // is at, how to change it, then the extras. The primary control sits in the
 // bottom two-thirds where a thumb reaches without shifting grip.
-export default function TaskDetailScreen({ task, position, total, changes = 0, onSetPercent, onToggleNa, onAttachPhoto, onOpenNotes, onOpenHistory }) {
+export default function TaskDetailScreen({ task, position, total, history = [], onSetPercent, onToggleNa, onAttachPhoto, onOpenNotes }) {
   return (
     <>
       <p className="text-[13px] text-[color:var(--text-muted)]">
@@ -40,20 +40,10 @@ export default function TaskDetailScreen({ task, position, total, changes = 0, o
           />
         )}
         {!task.na && <TaskStatus task={task} showLabel />}
-        {/* The obvious question at 100% is "how did it get there, and who
-            said so". This line was already answering half of it, so it is
-            the way in rather than another button competing with the chips. */}
         {task.updatedBy && !task.na && (
-          <button
-            onClick={onOpenHistory}
-            className="tap pressable -mb-2 flex items-center gap-1 rounded-[var(--radius-control)] px-2 text-[13px] text-[color:var(--text-secondary)]"
-          >
+          <p className="text-[13px] text-[color:var(--text-secondary)]">
             Set by {task.updatedBy}, {relativeTime(task.updatedAt)}
-            {changes > 1 && (
-              <span className="text-[color:var(--text-muted)]">&nbsp;· {changes} changes</span>
-            )}
-            <ChevronRight size={15} aria-hidden="true" />
-          </button>
+          </p>
         )}
       </div>
 
@@ -122,6 +112,47 @@ export default function TaskDetailScreen({ task, position, total, changes = 0, o
           survive a reload.
         </p>
       </div>
+
+      {/* This task's own history, on the task rather than a screen away.
+          A job-wide list interleaves nine tasks, so following one task's
+          story meant scanning the page for its name — and the question
+          "how did this get to 100%" is asked while standing on the task,
+          not somewhere else. The job screen still has the full list,
+          grouped by task, for when the question is about the whole job. */}
+      {history.length > 0 && (
+        <div className="mt-7 border-t border-[color:var(--border)] pt-5">
+          <h3 className="mb-2 text-[12px] font-semibold uppercase tracking-wide text-[color:var(--text-muted)]">
+            History
+          </h3>
+          <ul className="card overflow-hidden">
+            {history.map((entry, i) => (
+              <li
+                key={`${entry.at}-${i}`}
+                className="flex items-baseline justify-between gap-3 border-b border-[color:var(--border)] px-4 py-2.5 last:border-b-0"
+              >
+                <span className="min-w-0 text-[14px] leading-snug">
+                  <span className="font-medium">{entry.by}</span>{' '}
+                  <span className="text-[color:var(--text-secondary)]">{describe(entry)}</span>
+                </span>
+                <span className="shrink-0 text-[12px] text-[color:var(--text-muted)]">
+                  {relativeTime(entry.at)}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
     </>
   )
+}
+
+// "set it to 75%" reads better than a bare number, and the from-value is only
+// worth showing when there was one — "from nothing to 25%" is noise on a
+// task's first entry.
+function describe(entry) {
+  if (entry.na) return 'marked it not applicable'
+  const to = `${entry.to}%`
+  if (entry.from === null || entry.from === undefined) return `set it to ${to}`
+  if (entry.from === entry.to) return `confirmed it at ${to}`
+  return `moved it from ${entry.from}% to ${to}`
 }

@@ -1,22 +1,26 @@
 import { History } from 'lucide-react'
 import EmptyState from '../components/EmptyState'
+import TaskStatus from '../components/TaskStatus'
 import { relativeTime } from '../lib/format'
 
-// Who changed what, newest first.
+// Who changed what.
 //
-// A job is worked by several people over months, so "75%" on its own does
-// not say whether it moved this morning or in July, or who to ask about it.
-// Every percentage change already writes an entry — this is the first thing
-// that reads them.
+// Grouped by task rather than listed in one chronological run. A flat list
+// interleaves nine tasks, so "Fit-off — outlets & switches" appears three
+// times separated by other tasks' rows, and following one task's story means
+// scanning the whole page for its name. Grouped, each task's chain is three
+// lines in one place.
 //
-// Deliberately not editable and deliberately not deletable: the value of a
-// history is that nobody can quietly tidy it.
-export default function JobHistoryScreen({ job, taskId }) {
-  // Filtered to one task when you arrived from that task's screen, which is
-  // where "why is this at 100%" gets asked. Unfiltered from the job screen,
-  // where the question is "what has been happening here".
-  const entries = (job.history ?? []).filter((e) => !taskId || e.t === taskId)
-  const labelFor = (taskId) => job.tasks.find((t) => t.id === taskId)?.name ?? taskId
+// Groups are ordered by most recent activity, so what moved today is at the
+// top and what has not been touched since August is at the bottom — the same
+// ordering question the manager screen answers, asked of tasks instead of
+// jobs.
+//
+// A task's own history also appears inline on its task screen, which is where
+// "why is this at 100%" gets asked. This is the whole-job view, for when the
+// question is "what has been happening here".
+export default function JobHistoryScreen({ job }) {
+  const entries = job.history ?? []
 
   if (entries.length === 0) {
     return (
@@ -28,22 +32,57 @@ export default function JobHistoryScreen({ job, taskId }) {
     )
   }
 
+  const groups = new Map()
+  for (const entry of entries) {
+    const list = groups.get(entry.t) ?? []
+    list.push(entry)
+    groups.set(entry.t, list)
+  }
+
+  const ordered = [...groups.entries()]
+    .map(([id, list]) => ({
+      id,
+      task: job.tasks.find((t) => t.id === id),
+      label: job.tasks.find((t) => t.id === id)?.name ?? id,
+      entries: list,
+      latest: Math.max(...list.map((e) => new Date(e.at).getTime())),
+    }))
+    .sort((a, b) => b.latest - a.latest)
+
   return (
-    <ul className="card overflow-hidden">
-      {entries.map((entry, i) => (
-        <li
-          key={`${entry.at}-${entry.t}-${i}`}
-          className="border-b border-[color:var(--border)] px-4 py-3 last:border-b-0"
-        >
-          <p className="text-[15px] leading-snug">{labelFor(entry.t)}</p>
-          <p className="mt-0.5 text-[14px] text-[color:var(--text-secondary)]">
-            <span className="font-medium text-[color:var(--text-primary)]">{entry.by}</span>{' '}
-            {describe(entry)}
-          </p>
-          <p className="text-[12px] text-[color:var(--text-muted)]">{relativeTime(entry.at)}</p>
-        </li>
+    <div className="flex flex-col gap-4">
+      {ordered.map((group) => (
+        <section key={group.id}>
+          <div className="mb-1.5 flex items-baseline justify-between gap-3 px-1">
+            <h2 className="flex min-w-0 items-center gap-2 text-[15px] font-medium">
+              {group.task && <TaskStatus task={group.task} />}
+              <span className="min-w-0 truncate">{group.label}</span>
+            </h2>
+            {group.task && !group.task.na && typeof group.task.pct === 'number' && (
+              <span className="shrink-0 text-[15px] font-semibold tabular-nums">
+                {group.task.pct}%
+              </span>
+            )}
+          </div>
+          <ul className="card overflow-hidden">
+            {group.entries.map((entry, i) => (
+              <li
+                key={`${entry.at}-${i}`}
+                className="flex items-baseline justify-between gap-3 border-b border-[color:var(--border)] px-4 py-2.5 last:border-b-0"
+              >
+                <span className="min-w-0 text-[14px] leading-snug">
+                  <span className="font-medium">{entry.by}</span>{' '}
+                  <span className="text-[color:var(--text-secondary)]">{describe(entry)}</span>
+                </span>
+                <span className="shrink-0 text-[12px] text-[color:var(--text-muted)]">
+                  {relativeTime(entry.at)}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </section>
       ))}
-    </ul>
+    </div>
   )
 }
 
