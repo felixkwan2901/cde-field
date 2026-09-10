@@ -7,7 +7,7 @@ import { relativeTime } from '../lib/format'
 // The screen the demo lives or dies on. Top to bottom: what it is, what it
 // is at, how to change it, then the extras. The primary control sits in the
 // bottom two-thirds where a thumb reaches without shifting grip.
-export default function TaskDetailScreen({ task, position, total, onSetPercent, onToggleNa, onFakeAttach }) {
+export default function TaskDetailScreen({ task, position, total, onSetPercent, onToggleNa, onAttachPhoto, onAddNote }) {
   return (
     <>
       <p className="text-[13px] text-[color:var(--text-muted)]">
@@ -60,31 +60,53 @@ export default function TaskDetailScreen({ task, position, total, onSetPercent, 
         {task.attachments.length > 0 && (
           <ul className="mb-3 flex flex-col gap-2">
             {task.attachments.map((a) => (
-              <li
-                key={a.id}
-                className="rounded-[var(--radius-control)] bg-[color:var(--surface-2)] px-3 py-2 text-[14px] text-[color:var(--text-secondary)]"
-              >
-                {a.kind === 'photo' ? '📷 Site photo' : a.text}
+              <li key={a.id}>
+                {a.kind === 'photo' ? (
+                  <img
+                    src={a.src}
+                    alt="Site photo"
+                    className="max-h-56 w-full rounded-[var(--radius-control)] object-cover"
+                  />
+                ) : (
+                  <p className="rounded-[var(--radius-control)] bg-[color:var(--surface-2)] px-3 py-2 text-[14px] text-[color:var(--text-secondary)]">
+                    {a.text}
+                  </p>
+                )}
               </li>
             ))}
           </ul>
         )}
         <div className="grid grid-cols-2 gap-3">
-          <button
-            onClick={() => onFakeAttach('photo')}
-            className="tap pressable card flex items-center justify-center gap-2 text-[15px]"
-          >
+          {/* A real capture, not a placeholder. `capture="environment"` asks
+              for the rear camera directly, so on a phone this opens the
+              camera rather than a file browser — which is the difference
+              between a demo people believe and one they don't. */}
+          <label className="tap pressable card flex cursor-pointer items-center justify-center gap-2 text-[15px]">
             <Camera size={18} aria-hidden="true" /> Add photo
-          </button>
+            <input
+              type="file"
+              accept="image/*"
+              capture="environment"
+              className="sr-only"
+              onChange={(e) => {
+                const file = e.target.files?.[0]
+                if (file) onAttachPhoto(file)
+                // Cleared so photographing the same thing twice still fires
+                // a change event.
+                e.target.value = ''
+              }}
+            />
+          </label>
           <button
-            onClick={() => onFakeAttach('note')}
+            onClick={onAddNote}
             className="tap pressable card flex items-center justify-center gap-2 text-[15px]"
           >
             <StickyNote size={18} aria-hidden="true" /> Add note
           </button>
         </div>
         <p className="mt-2 text-center text-[12px] text-[color:var(--text-muted)]">
-          Prototype — attachments aren&apos;t uploaded and don&apos;t survive a reload.
+          Prototype — the photo stays on this phone. Nothing is uploaded, and it doesn&apos;t
+          survive a reload.
         </p>
       </div>
     </>
