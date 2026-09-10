@@ -605,7 +605,40 @@ body {
 /* Paper is white and ink is black whichever theme the screen was in — a dark
    theme printed as-is wastes a cartridge and comes out unreadable. */
 @media print {
+  /* Undo the app frame. On screen this is a fixed, full-height shell with
+     one scrolling panel inside it — which is the whole reason the app feels
+     like an app, and is also unprintable: a fixed element prints once at
+     viewport height and the scroller clips everything past the fold. Chrome
+     printed page one of the report and dropped the rest; Safari printed
+     nothing at all. On paper it has to be an ordinary document that flows. */
+  .app-frame {
+    position: static;
+    display: block;
+    height: auto;
+    overflow: visible;
+  }
+
+  .app-scroll {
+    flex: none;
+    height: auto;
+    overflow: visible;
+  }
+
+  /* The report is laid out for a 390px phone. A sheet of A4 is not one, and
+     a 448px column down the left of it with two thirds white to the right
+     is not a document anyone wants to hand round a meeting. */
+  .app-scroll > * {
+    max-width: none !important;
+    padding: 0 !important;
+  }
+
+  /* The screen's own large title prints as a heading above the report's
+     heading, which is the same thing said twice. Anything printable in
+     this app carries its own title. */
   .no-print,
+  .large-title,
+  .navbar,
+  .tabbar,
   header {
     display: none !important;
   }
