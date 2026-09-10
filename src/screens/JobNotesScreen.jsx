@@ -30,25 +30,25 @@ export default function JobNotesScreen({ job, onAddNote, saving }) {
 
   return (
     <>
-      <form onSubmit={submit} className="card mb-5 p-3">
+      <form onSubmit={submit} className="card mb-6 p-4">
         <textarea
           value={text}
           onChange={(e) => setText(e.target.value.slice(0, LIMIT))}
           rows={3}
           placeholder="Where did you get to? What should the next person know?"
-          className="w-full resize-none bg-transparent text-[16px] leading-snug outline-none placeholder:text-[color:var(--text-muted)]"
+          className="w-full resize-none bg-transparent text-sm leading-snug outline-none placeholder:text-ink-2"
         />
-        <div className="mt-2 flex items-center justify-between gap-3">
+        <div className="mt-2 flex items-center justify-between gap-2">
           {/* The count only appears when it starts to matter — a character
               counter sitting there from the first keystroke reads as a
               telling-off. */}
-          <span className="text-[12px] text-[color:var(--text-muted)]">
+          <span className="text-xs text-ink-2">
             {remaining < 60 ? `${remaining} left` : ''}
           </span>
           <button
             type="submit"
             disabled={!text.trim() || saving}
-            className="tap pressable rounded-[var(--radius-control)] bg-[color:var(--brand-green)] px-5 text-[15px] font-medium text-[color:var(--brand-green-ink)] disabled:opacity-40"
+            className="tap pressable rounded-sm bg-accent px-4 text-sm font-medium text-accent-ink disabled:opacity-40"
           >
             {saving ? 'Saving…' : 'Add note'}
           </button>
@@ -58,7 +58,7 @@ export default function JobNotesScreen({ job, onAddNote, saving }) {
       {/* No authentication, so anyone with the link can read this. Said here
           rather than only in a README, because this is the box someone would
           otherwise type a client's phone number into. */}
-      <p className="mb-4 text-[12px] leading-relaxed text-[color:var(--text-muted)]">
+      <p className="mb-4 text-xs leading-relaxed text-ink-2">
         Everyone on this job sees these. Keep client details out of them.
       </p>
 
@@ -73,10 +73,10 @@ export default function JobNotesScreen({ job, onAddNote, saving }) {
           {notes.map((note, i) => (
             <li
               key={`${note.at}-${i}`}
-              className="border-b border-[color:var(--border)] px-4 py-3 last:border-b-0"
+              className="border-b border-line px-4 py-4 last:border-b-0"
             >
-              <p className="text-[15px] leading-snug">{note.text}</p>
-              <p className="mt-1 text-[12px] text-[color:var(--text-muted)]">
+              <p className="text-sm leading-snug">{note.text}</p>
+              <p className="mt-1 text-xs text-ink-2">
                 {note.by} · {relativeTime(note.at)}
               </p>
             </li>

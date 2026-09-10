@@ -22,11 +22,13 @@ export function readTheme() {
 // slate status bar looks like a page inside a browser someone forgot to
 // theme. It has to move with the theme, so it is set here rather than left
 // as a fixed value in index.html.
-const BAR = { light: '#ffffff', dark: '#161c24' }
-
 export function applyTheme(theme) {
   document.documentElement.setAttribute('data-theme', theme)
-  document.querySelector('meta[name="theme-color"]')?.setAttribute('content', BAR[theme] ?? BAR.light)
+  // Read back rather than keep a second copy: the browser wants a literal
+  // colour here, and a hardcoded one would silently drift the day
+  // --surface-1 changes in index.css.
+  const bar = getComputedStyle(document.documentElement).getPropertyValue('--surface-1').trim()
+  if (bar) document.querySelector('meta[name="theme-color"]')?.setAttribute('content', bar)
   try {
     localStorage.setItem(KEY, theme)
   } catch {

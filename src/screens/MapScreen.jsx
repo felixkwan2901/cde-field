@@ -31,24 +31,24 @@ export default function MapScreen({ jobs, loading, onOpenJob }) {
           is the ground you are standing on. Tall enough to be worth
           opening, short enough that the list under it is discoverable
           without a scroll that feels like a search. */}
-      <div className="-mx-4 -mt-3">
+      <div className="-mx-4 -mt-2">
         <JobMap jobs={placeable} onOpenJob={onOpenJob} height={400} bleed />
       </div>
 
-      <p className="list-label mt-5">Sites</p>
+      <p className="list-label mt-6">Sites</p>
       <div className="list-group">
         {placeable.map((job) => (
           <button key={job.id} className="list-row" onClick={() => onOpenJob(job.id)}>
-            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[color:var(--surface-2)]">
-              <MapPin size={17} aria-hidden="true" className="text-[color:var(--text-secondary)]" />
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-surface-2">
+              <MapPin size={17} aria-hidden="true" className="text-ink-2" />
             </span>
             <span className="min-w-0 flex-1">
-              <span className="block truncate text-[15px] font-medium">{job.jobName}</span>
-              <span className="block truncate text-[13px] text-[color:var(--text-secondary)]">
+              <span className="block truncate text-sm font-medium">{job.jobName}</span>
+              <span className="block truncate text-xs text-ink-2">
                 {job.site.address}
               </span>
             </span>
-            <span className="shrink-0 text-[13px] tabular-nums text-[color:var(--text-muted)]">
+            <span className="shrink-0 text-xs tabular-nums text-ink-2">
               {progressCaption(jobProgress(job.tasks))}
             </span>
           </button>

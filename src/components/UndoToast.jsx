@@ -13,9 +13,9 @@ export default function UndoToast({ message, onUndo, onExpire }) {
 
   return (
     <div className="safe-bottom pointer-events-none fixed inset-x-0 bottom-0 z-30 flex justify-center px-4 pb-4">
-      <div className="pointer-events-auto flex w-full max-w-md items-center justify-between gap-3 rounded-2xl bg-[#1f2a37] px-4 py-3 text-[15px] text-white shadow-lg">
+      <div className="pointer-events-auto flex w-full max-w-md items-center justify-between gap-2 rounded-2xl bg-ink px-4 py-4 text-sm text-page shadow-[var(--shadow-card)]">
         <span className="min-w-0 truncate">{message}</span>
-        <button onClick={onUndo} className="tap shrink-0 px-2 font-semibold text-[color:var(--brand-orange)]">
+        <button onClick={onUndo} className="tap shrink-0 px-2 font-medium text-accent">
           Undo
         </button>
       </div>

@@ -18,12 +18,12 @@ import { jobProgress } from '../lib/progress'
 function pin(job) {
   const { state, percent } = jobProgress(job.tasks)
   const label = state === 'no-data' ? '—' : `${percent}%`
-  const background = state === 'complete' ? 'var(--brand-green)' : 'var(--surface-1)'
-  const color = state === 'complete' ? 'var(--brand-green-ink)' : 'var(--text-primary)'
+  const background = state === 'complete' ? 'var(--accent)' : 'var(--surface-1)'
+  const color = state === 'complete' ? 'var(--accent-ink)' : 'var(--text-primary)'
   return L.divIcon({
     className: '',
     html: `<span style="display:flex;align-items:center;justify-content:center;
-      width:40px;height:40px;border-radius:999px;border:2px solid var(--brand-green);
+      width:40px;height:40px;border-radius:999px;border:2px solid var(--accent);
       background:${background};color:${color};font-size:12px;font-weight:600;
       box-shadow:0 2px 8px rgba(0,0,0,0.25)">${label}</span>`,
     iconSize: [40, 40],
@@ -76,7 +76,7 @@ export default function JobMap({ jobs, onOpenJob, height = 220, bleed = false })
 
   if (placeable.length === 0) {
     return (
-      <div className="card px-4 py-5 text-center text-[13px] text-[color:var(--text-secondary)]">
+      <div className="card px-4 py-6 text-center text-xs text-ink-2">
         No sites to map yet — jobs need an address before they can be placed.
       </div>
     )

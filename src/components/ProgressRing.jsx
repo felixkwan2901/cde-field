@@ -12,7 +12,7 @@ export default function ProgressRing({ progress, size = 88, stroke = 8, classNam
   const circumference = 2 * Math.PI * radius
   const filled = state === 'no-data' ? 0 : ((percent ?? 0) / 100) * circumference
 
-  const trackColor = state === 'no-data' ? 'var(--text-muted)' : 'var(--gridline)'
+  const trackColor = state === 'no-data' ? 'var(--border-strong)' : 'var(--border)'
 
   return (
     <svg
@@ -41,7 +41,7 @@ export default function ProgressRing({ progress, size = 88, stroke = 8, classNam
           cy={size / 2}
           r={radius}
           fill="none"
-          stroke="var(--brand-green)"
+          stroke="var(--accent)"
           strokeWidth={stroke}
           strokeLinecap="round"
           strokeDasharray={`${filled} ${circumference}`}

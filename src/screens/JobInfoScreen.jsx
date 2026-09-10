@@ -3,11 +3,11 @@
 // what will hurt you, when it's due.
 function Section({ title, children }) {
   return (
-    <section className="mb-5">
-      <h2 className="mb-2 text-[12px] font-semibold uppercase tracking-wide text-[color:var(--text-muted)]">
+    <section className="mb-6">
+      <h2 className="mb-2 text-xs font-medium text-ink-2">
         {title}
       </h2>
-      <div className="overflow-hidden rounded-2xl border border-[color:var(--border)] bg-[color:var(--surface-1)]">
+      <div className="overflow-hidden rounded-2xl border border-line bg-surface">
         {children}
       </div>
     </section>
@@ -21,19 +21,19 @@ function Field({ label, value, href, mono = false }) {
   if (!value) return null
   const body = (
     <>
-      <span className="block text-[12px] text-[color:var(--text-muted)]">{label}</span>
-      <span className={`block text-[15px] ${mono ? 'font-mono text-[20px]' : ''}`}>{value}</span>
+      <span className="block text-xs text-ink-2">{label}</span>
+      <span className={`block text-sm ${mono ? 'font-mono text-lg' : ''}`}>{value}</span>
     </>
   )
   return href ? (
     <a
       href={href}
-      className="tap block border-b border-[color:var(--border)] px-4 py-3 last:border-b-0 text-[color:var(--brand-orange)]"
+      className="tap block border-b border-line px-4 py-4 last:border-b-0 text-accent"
     >
       {body}
     </a>
   ) : (
-    <div className="border-b border-[color:var(--border)] px-4 py-3 last:border-b-0">{body}</div>
+    <div className="border-b border-line px-4 py-4 last:border-b-0">{body}</div>
   )
 }
 

@@ -1,5 +1,45 @@
 @import 'tailwindcss';
 
+/* Tailwind reads @theme, not :root, so the static half of the scale lives
+   here and becomes real utilities — text-md, rounded-lg, and so on. The
+   colours cannot: they change with the theme, so they stay custom
+   properties below and are bridged with @theme inline, which tells Tailwind
+   the utility name without freezing the value. */
+@theme {
+  --text-xs: 14px;
+  --text-sm: 16px;
+  --text-md: 18px;
+  --text-lg: 22px;
+  --text-xl: 28px;
+  --text-2xl: 44px;
+
+  --text-xs--line-height: 1.4;
+  --text-sm--line-height: 1.55;
+  --text-md--line-height: 1.45;
+  --text-lg--line-height: 1.3;
+  --text-xl--line-height: 1.25;
+  --text-2xl--line-height: 1.1;
+
+  --radius-sm: 6px;
+  --radius-lg: 12px;
+}
+
+@theme inline {
+  --color-page: var(--page-plane);
+  --color-surface: var(--surface-1);
+  --color-surface-2: var(--surface-2);
+  --color-ink: var(--text-primary);
+  --color-ink-2: var(--text-secondary);
+  --color-accent: var(--accent);
+  --color-accent-ink: var(--accent-ink);
+  --color-line: var(--border);
+  --color-line-strong: var(--border-strong);
+  --color-warn: var(--status-warning);
+  --color-warn-bg: var(--status-warning-bg);
+  --color-crit: var(--status-critical);
+  --color-crit-bg: var(--status-critical-bg);
+}
+
 /* Design tokens, taken from the dashboard so the two apps read as one system
    — but light-first, which is the one deliberate inversion.
    
@@ -10,77 +50,121 @@
    are standing on, so dark is an explicit choice here, not an inherited one.
    See src/lib/theme.js. */
 :root {
-  --brand-orange: #ef6c1f;
-  --brand-green: #17864a;
-  --brand-green-ink: #ffffff;
+  /* ---------------------------------------------------------------------
+     One token layer. Nothing below this block, and nothing in any
+     component, sets a colour, a size or a distance directly.
 
+     COLOUR — deliberately five roles, not a palette:
+       one page ground (with two surfaces lifted off it), one text colour,
+       one accent, and two muted shades for subtext and borders. Anything a
+       sixth colour would express is expressed with size or weight instead.
+
+     Every text pairing here clears 7:1 (WCAG AAA) on every ground it can
+     land on, not the 4.5:1 floor. That is not perfectionism: this screen
+     gets read at arm's length, outdoors, on a phone whose auto-brightness
+     has already given up. The old muted grey measured 4.18:1 on a card and
+     was the first thing to disappear in sun.
+     --------------------------------------------------------------------- */
+
+  /* Grounds. surface-1 is a card, surface-2 an inset within one. */
   --page-plane: #f4f6f8;
   --surface-1: #ffffff;
   --surface-2: #eef1f5;
 
+  /* Text. Two tiers, both AAA — hierarchy is carried by size and weight,
+     which survive sunlight and greyscale in a way a third grey does not. */
   --text-primary: #17212b;
-  --text-secondary: #4a5763;
-  --text-muted: #68757f;
+  --text-secondary: #465059;
 
-  --gridline: #dfe4ea;
-  --border: #dfe4ea;
+  /* Accent. The dashboard's green (#38b86a, hue 143) taken down in
+     lightness until it clears AAA as text on white; the hue is unchanged,
+     so the two apps still read as one product. It doubles as a fill, where
+     white ink on it measures 8.11:1. */
+  --accent: #0f5c2d;
+  --accent-ink: #ffffff;
 
-  --status-good: #17864a;
-  --status-good-bg: rgba(23, 134, 74, 0.1);
-  --status-warning: #8a6100;
-  --status-warning-bg: rgba(214, 158, 46, 0.14);
-  --status-critical: #b4231d;
-  --status-critical-bg: rgba(180, 35, 29, 0.1);
+  /* Borders. Two jobs, and they are not the same job: a divider between
+     rows is decoration and stays quiet, while the boundary of a control
+     someone has to hit carries meaning and clears the 3:1 that WCAG asks
+     of a non-text element. */
+  --border: #d4dae1;
+  --border-strong: #7e8b95;
 
-  /* Cards sit on the page rather than being drawn onto it. A hairline
-     border on a near-white ground is nearly invisible outdoors — the screen
-     is washed out and a 1px 6%-contrast line is the first thing to go — so
-     separation comes from a soft shadow plus a faint ring, which survives
-     glare far better. */
-  --shadow-card: 0 1px 2px rgba(23, 33, 43, 0.05), 0 6px 16px -6px rgba(23, 33, 43, 0.14);
-  --ring-card: 0 0 0 1px rgba(23, 33, 43, 0.06);
-  --shadow: var(--shadow-card);
+  /* Status. Used for text, so also AAA. */
+  --status-warning: #704700;
+  --status-warning-bg: rgba(112, 71, 0, 0.1);
+  --status-critical: #9a1f13;
+  --status-critical-bg: rgba(154, 31, 19, 0.1);
 
-  --radius-card: 16px;
-  --radius-control: 12px;
+  /* ELEVATION — one shadow, one job. A card is lifted, so it has a shadow
+     and no border. A bar is flush, so it has a border and no shadow. Never
+     both on the same element: that is what made every surface look heavy. */
+  --shadow-card: 0 1px 2px rgba(23, 33, 43, 0.06), 0 8px 20px -8px rgba(23, 33, 43, 0.16);
+
+  /* SPACING — 8pt grid, half-step at the bottom for optical nudges only. */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 16px;
+  --space-4: 24px;
+  --space-5: 32px;
+  --space-6: 48px;
+  --space-7: 64px;
+
+  /* TYPE — the six steps live in @theme above so Tailwind can generate
+     text-xs … text-2xl from them. Only what Tailwind has no namespace for
+     is repeated here. */
+  --leading-tight: 1.25;
+  --leading-body: 1.55;
+
+  /* Headings are 500. 700 on a geometric sans at 28px is shouting, and the
+     size difference is already doing the work. */
+  --weight-heading: 500;
+  --weight-medium: 500;
+
+  /* MOTION — 150ms for anything under a finger. The screen transition is
+     the one exception and lives on its own token; see the push/pop rules. */
+  --motion: 150ms;
+  --motion-nav: 240ms;
+  --ease: cubic-bezier(0.32, 0.72, 0, 1);
 
   /* The two fixed bars. Everything that scrolls has to clear them, so their
      heights are tokens rather than magic numbers repeated in six places. */
   --nav-h: 52px;
-  --tab-h: 56px;
+  --tab-h: 60px;
+
   color-scheme: light;
 }
 
+/* Dark redefines colour and nothing else. Every ratio here clears 7:1 too;
+   the accent returns almost exactly to the dashboard's own #38b86a, because
+   on a dark ground it no longer has to be darkened to be legible. */
 :root[data-theme='dark'] {
   --page-plane: #0d1117;
   --surface-1: #161c24;
   --surface-2: #1b232e;
 
   --text-primary: #f5f7fa;
-  --text-secondary: #a5afb8;
-  --text-muted: #8b95a1;
+  --text-secondary: #a5aeb6;
 
-  --gridline: #232b3a;
-  --border: rgba(255, 255, 255, 0.08);
+  --accent: #39c670;
+  --accent-ink: #04170c;
 
-  --brand-green: #38b86a;
-  --brand-green-ink: #04170c;
+  --border: #333c4a;
+  --border-strong: #636f79;
 
-  --status-good: #38b86a;
-  --status-good-bg: rgba(56, 184, 106, 0.14);
-  --status-warning: #f2a94e;
-  --status-warning-bg: rgba(242, 169, 78, 0.14);
-  --status-critical: #f87171;
-  --status-critical-bg: rgba(248, 113, 113, 0.12);
+  --status-warning: #f09d0f;
+  --status-warning-bg: rgba(240, 157, 15, 0.14);
+  --status-critical: #fa8f85;
+  --status-critical-bg: rgba(250, 143, 133, 0.12);
 
-  /* In the dark theme a shadow does nothing — black on near-black is not a
-     separation — so the same job is done by lifting the card's surface above
-     the page and keeping a slightly brighter ring. */
-  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.5);
-  --ring-card: 0 0 0 1px rgba(255, 255, 255, 0.07);
-  --shadow: var(--shadow-card);
+  /* A shadow does nothing on near-black. The lift comes from surface-1
+     being brighter than the page, which is why the card rule below sets
+     no border in either theme. */
+  --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.55);
+
   color-scheme: dark;
 }
+
 
 @font-face {
   font-family: 'Geist';
@@ -106,11 +190,15 @@ body {
   margin: 0;
   background: var(--page-plane);
   color: var(--text-primary);
-  font-family: 'Geist', -apple-system, system-ui, sans-serif;
+  font-family: 'Geist', system-ui, -apple-system, sans-serif;
   /* 16px minimum. Anything smaller is unreadable at arm's length in bad
      light, and on iOS a sub-16px input also triggers a zoom on focus. */
-  font-size: 16px;
+  font-size: var(--text-sm);
+  line-height: var(--leading-body);
   -webkit-font-smoothing: antialiased;
+  /* Figures line up in a column and stop jittering as they count up. Every
+     number in this app is a percentage, an hour or a dollar. */
+  font-variant-numeric: tabular-nums;
 }
 
 /* Nothing here scrolls sideways. A horizontal scrollbar on a phone means
@@ -155,18 +243,19 @@ a,
 }
 
 /* One card treatment, used everywhere, so nothing drifts into having its own
-   idea of a corner radius. */
+   idea of a corner radius. A shadow and no border — the two together were
+   what made every surface on this app look like it had been outlined. */
 .card {
   background: var(--surface-1);
-  border-radius: var(--radius-card);
-  box-shadow: var(--ring-card), var(--shadow-card);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
 }
 
 /* A pressed state you can feel through a glove. Touch has no hover, so the
    only feedback available is what happens under the finger — without this a
    tap on a phone is completely silent. */
 .pressable {
-  transition: transform 120ms ease, box-shadow 120ms ease;
+  transition: transform var(--motion) var(--ease);
 }
 .pressable:active {
   transform: scale(0.985);
@@ -183,7 +272,8 @@ a,
 
 /* Gloves. A nitrile glove spreads the capacitive contact patch and shifts
    its centroid, so Apple's 44pt — which assumes a bare fingertip — is not
-   enough. Every tap target in this app is at least this big. */
+   enough, and neither really is 48. Every tap target in this app is at
+   least this big. */
 .tap {
   min-height: 56px;
   min-width: 56px;
@@ -243,9 +333,11 @@ a,
 }
 
 /* The hairline only appears once content has scrolled under the bar. A
-   permanent rule under a large title draws a box around nothing. */
+   permanent rule under a large title draws a box around nothing. It is a
+   border rather than a shadow because the bar is flush with the content,
+   not floating above it. */
 .navbar--bordered {
-  box-shadow: inset 0 -0.5px 0 var(--border);
+  border-bottom: 1px solid var(--border);
 }
 
 /* The inline title crossfades in as the large one leaves. Both are present
@@ -253,7 +345,7 @@ a,
 .navbar__title {
   opacity: 0;
   transform: translateY(6px);
-  transition: opacity 180ms ease, transform 180ms ease;
+  transition: opacity var(--motion) ease, transform var(--motion) ease;
 }
 .navbar__title--shown {
   opacity: 1;
@@ -263,9 +355,9 @@ a,
 /* The large title, in the scroll flow rather than in the bar — it is
    content that happens to be a heading, which is why it scrolls away. */
 .large-title {
-  font-size: 30px;
-  line-height: 1.15;
-  font-weight: 600;
+  font-size: var(--text-xl);
+  line-height: var(--leading-tight);
+  font-weight: var(--weight-heading);
   letter-spacing: -0.02em;
 }
 
@@ -279,7 +371,7 @@ a,
   background: color-mix(in srgb, var(--surface-1) 86%, transparent);
   backdrop-filter: saturate(180%) blur(20px);
   -webkit-backdrop-filter: saturate(180%) blur(20px);
-  box-shadow: inset 0 0.5px 0 var(--border);
+  border-top: 1px solid var(--border);
 }
 
 @supports not (backdrop-filter: blur(1px)) {
@@ -294,17 +386,16 @@ a,
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 3px;
+  gap: var(--space-1);
   height: var(--tab-h);
-  font-size: 11px;
-  font-weight: 500;
-  letter-spacing: 0.01em;
-  color: var(--text-muted);
-  transition: color 120ms ease;
+  font-size: var(--text-xs);
+  font-weight: var(--weight-medium);
+  color: var(--text-secondary);
+  transition: color var(--motion) ease;
 }
 
 .tabbar__item[aria-selected='true'] {
-  color: var(--brand-green);
+  color: var(--accent);
 }
 
 /* The icon takes the press, not the whole tab: a full-width flash across a
@@ -314,7 +405,7 @@ a,
 }
 
 .tabbar__icon {
-  transition: transform 120ms ease;
+  transition: transform var(--motion) var(--ease);
 }
 
 /* ---------- push / pop ---------- */
@@ -342,14 +433,18 @@ a,
   }
 }
 
+/* Everything a finger touches settles in 150ms. A whole screen arriving is
+   the deliberate exception: under about 200ms a slide reads as a flicker
+   rather than as movement, and the direction — which is the only thing this
+   animation is for — stops being legible. Hence its own token. */
 .nav-push {
-  animation: push-in 240ms cubic-bezier(0.32, 0.72, 0, 1);
+  animation: push-in var(--motion-nav) var(--ease);
 }
 .nav-pop {
-  animation: pop-in 240ms cubic-bezier(0.32, 0.72, 0, 1);
+  animation: pop-in var(--motion-nav) var(--ease);
 }
 .nav-fade {
-  animation: fade-in 200ms ease;
+  animation: fade-in var(--motion) ease;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -370,8 +465,8 @@ a,
    edge so the divider reads as separating rows rather than boxing them. */
 .list-group {
   background: var(--surface-1);
-  border-radius: var(--radius-card);
-  box-shadow: var(--ring-card), var(--shadow-card);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
   overflow: hidden;
 }
 
@@ -379,9 +474,9 @@ a,
   display: flex;
   width: 100%;
   align-items: center;
-  gap: 12px;
+  gap: var(--space-3);
   min-height: 56px;
-  padding: 12px 14px;
+  padding: var(--space-2) var(--space-3);
   text-align: left;
   position: relative;
 }
@@ -390,9 +485,9 @@ a,
   content: '';
   position: absolute;
   top: 0;
-  left: 14px;
+  left: var(--space-3);
   right: 0;
-  height: 0.5px;
+  height: 1px;
   background: var(--border);
 }
 
@@ -402,47 +497,76 @@ a,
   background: var(--surface-2);
 }
 
-.list-label {
-  padding: 0 4px 6px;
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  color: var(--text-muted);
+/* A pointer is a desk, and a desk expects a hover. Touch never triggers
+   this, so it costs the phone nothing. */
+@media (hover: hover) {
+  .list-row:hover {
+    background: var(--surface-2);
+  }
 }
 
-button {
-  font: inherit;
-  color: inherit;
+.list-label {
+  padding: 0 var(--space-1) var(--space-2);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-medium);
+  color: var(--text-secondary);
+}
+
+/* Wrapped in @layer base rather than left bare. An unlayered rule beats
+   anything inside a layer no matter how specific, and Tailwind's utilities
+   are all layered — so `button { color: inherit }` sitting outside a layer
+   was quietly overriding text-accent-ink on the one control in this app
+   whose whole job is to be legible: the selected percentage chip, which was
+   rendering near-black on dark green. `font: inherit` was doing the same to
+   every font-size utility on a button. Preflight already handles both; this
+   only exists for the shorthand. */
+@layer base {
+  button {
+    font: inherit;
+    color: inherit;
+  }
+}
+
+/* Focus. There was none of this at all — Tailwind's reset removes the
+   browser default and nothing replaced it, so a keyboard or switch user had
+   no idea where they were.
+   
+   The offset is doing real work rather than decoration: on an accent-filled
+   control an accent ring would be invisible against its own fill, and the
+   2px gap of page colour between ring and element is what makes it show up
+   on both. :focus-visible rather than :focus so a thumb does not leave
+   rings behind it down a list. */
+:where(a, button, input, textarea, select, [tabindex]):focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
 }
 
 /* ---------- meeting report ---------- */
 
 .report-heading {
-  margin: 1.5rem 0 0.5rem;
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: var(--text-muted);
+  margin: var(--space-4) 0 var(--space-2);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-medium);
+  color: var(--text-secondary);
 }
 
 .report-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 13px;
+  font-size: var(--text-xs);
 }
 
 .report-table th {
   text-align: left;
   font-weight: 500;
   color: var(--text-secondary);
-  padding: 6px 8px 6px 0;
+  padding: var(--space-2) var(--space-2) var(--space-2) 0;
   border-bottom: 1px solid var(--border);
 }
 
 .report-table td {
-  padding: 7px 8px 7px 0;
+  padding: var(--space-2) var(--space-2) var(--space-2) 0;
   border-bottom: 1px solid var(--border);
   vertical-align: top;
 }
@@ -458,7 +582,7 @@ button {
    next column — "9/15" and "47 min ago" read as one string. */
 .report-table th + th,
 .report-table td + td {
-  padding-left: 14px;
+  padding-left: var(--space-3);
 }
 
 .report-table th:last-child,
@@ -481,7 +605,6 @@ button {
     --page-plane: #ffffff;
     --text-primary: #000000;
     --text-secondary: #333333;
-    --text-muted: #666666;
     --border: #cccccc;
   }
 

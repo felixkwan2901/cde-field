@@ -17,16 +17,16 @@ export default function ReportScreen({ jobs, roster }) {
 
   return (
     <div className="report">
-      <div className="mb-5 flex items-start justify-between gap-3">
+      <div className="mb-6 flex items-start justify-between gap-2">
         <div>
-          <h2 className="text-[20px] font-semibold">Field progress report</h2>
-          <p className="text-[13px] text-[color:var(--text-secondary)]">
+          <h2 className="text-lg font-medium">Field progress report</h2>
+          <p className="text-xs text-ink-2">
             {printedAt.toLocaleDateString('en-NZ', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
           </p>
         </div>
         <button
           onClick={() => window.print()}
-          className="tap pressable no-print flex shrink-0 items-center gap-2 rounded-[var(--radius-control)] bg-[color:var(--surface-2)] px-4 text-[14px]"
+          className="tap pressable no-print flex shrink-0 items-center gap-2 rounded-sm bg-surface-2 px-4 text-xs"
         >
           <Printer size={16} aria-hidden="true" />
           Print
@@ -50,7 +50,7 @@ export default function ReportScreen({ jobs, roster }) {
             return (
               <tr key={job.id}>
                 <td>
-                  <span className="text-[color:var(--text-muted)]">{job.jobNumber}</span> {job.jobName}
+                  <span className="text-ink-2">{job.jobNumber}</span> {job.jobName}
                 </td>
                 <td className="num">{p.state === 'no-data' ? '—' : `${p.percent}%`}</td>
                 <td className="num">
@@ -81,7 +81,7 @@ export default function ReportScreen({ jobs, roster }) {
               <td>
                 {person.name}
                 {person.offRoster && (
-                  <span className="text-[color:var(--text-muted)]"> (not on roster)</span>
+                  <span className="text-ink-2"> (not on roster)</span>
                 )}
               </td>
               <td className="num">{person.updates || '—'}</td>
@@ -96,7 +96,7 @@ export default function ReportScreen({ jobs, roster }) {
         </tbody>
       </table>
 
-      <p className="mt-5 text-[12px] leading-relaxed text-[color:var(--text-muted)]">
+      <p className="mt-6 text-xs leading-relaxed text-ink-2">
         Percentages are what the crew recorded on site — an unweighted average across each
         job&apos;s tasks, excluding any marked not applicable. They are not a claim percentage
         and are not used in any financial figure.

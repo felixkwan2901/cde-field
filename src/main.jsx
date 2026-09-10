@@ -20,18 +20,25 @@ function showUpdateBanner() {
   if (document.getElementById('cde-field-update-banner')) return
   const bar = document.createElement('div')
   bar.id = 'cde-field-update-banner'
+  // Built with the DOM rather than JSX because it has to be able to appear
+  // when React has not mounted, so it reads the tokens off :root instead of
+  // using a class. The five values it used to hardcode were the only colours
+  // in the app outside index.css.
   bar.style.cssText =
-    'position:fixed;bottom:calc(20px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);z-index:9999;' +
-    'display:flex;align-items:center;gap:12px;padding:10px 16px;border-radius:12px;' +
-    'background:#1f2a37;border:1px solid rgba(255,255,255,0.12);color:#f2f5f8;' +
-    'font:13px -apple-system,system-ui,sans-serif;box-shadow:0 4px 20px rgba(0,0,0,0.4);'
+    'position:fixed;bottom:calc(var(--space-4) + env(safe-area-inset-bottom));left:50%;' +
+    'transform:translateX(-50%);z-index:9999;' +
+    'display:flex;align-items:center;gap:var(--space-2);' +
+    'padding:var(--space-2) var(--space-3);border-radius:var(--radius-lg);' +
+    'background:var(--text-primary);color:var(--page-plane);' +
+    'font:var(--text-xs)/1.4 Geist,system-ui,sans-serif;box-shadow:var(--shadow-card);'
   const label = document.createElement('span')
   label.textContent = 'A new version is available.'
   const button = document.createElement('button')
   button.textContent = 'Refresh'
   button.style.cssText =
-    'background:#38b86a;color:#06210a;border:none;border-radius:8px;padding:6px 14px;' +
-    'font-weight:600;cursor:pointer;font-size:13px;'
+    'background:var(--accent);color:var(--accent-ink);border:none;' +
+    'border-radius:var(--radius-sm);padding:var(--space-2) var(--space-3);min-height:44px;' +
+    'font-weight:500;cursor:pointer;font-size:var(--text-xs);font-family:inherit;'
   button.onclick = () => {
     const url = new URL(window.location.href)
     url.searchParams.set('_r', Date.now())

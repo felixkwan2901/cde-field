@@ -10,10 +10,10 @@ import { relativeTime } from '../lib/format'
 export default function TaskDetailScreen({ task, position, total, history = [], onSetPercent, onToggleNa, onAttachPhoto, onOpenNotes }) {
   return (
     <>
-      <p className="text-[13px] text-[color:var(--text-muted)]">
+      <p className="text-xs text-ink-2">
         Task {position} of {total} · {task.area}
       </p>
-      <h2 className="mt-1 text-[22px] font-semibold leading-snug">{task.name}</h2>
+      <h2 className="mt-1 text-lg font-medium leading-snug">{task.name}</h2>
 
       {/* A ring rather than a bare number. The screen needed one thing the eye
           lands on first — at arm's length in sun a figure floating in space
@@ -22,8 +22,8 @@ export default function TaskDetailScreen({ task, position, total, history = [], 
       <div className="card my-6 flex flex-col items-center gap-2 px-4 py-6">
         {task.na ? (
           <>
-            <p className="text-[22px] font-semibold text-[color:var(--text-muted)]">Not applicable</p>
-            <p className="text-[13px] text-[color:var(--text-secondary)]">
+            <p className="text-lg font-medium text-ink-2">Not applicable</p>
+            <p className="text-xs text-ink-2">
               Excluded from this job&apos;s percentage
             </p>
           </>
@@ -41,7 +41,7 @@ export default function TaskDetailScreen({ task, position, total, history = [], 
         )}
         {!task.na && <TaskStatus task={task} showLabel />}
         {task.updatedBy && !task.na && (
-          <p className="text-[13px] text-[color:var(--text-secondary)]">
+          <p className="text-xs text-ink-2">
             Set by {task.updatedBy}, {relativeTime(task.updatedAt)}
           </p>
         )}
@@ -51,24 +51,24 @@ export default function TaskDetailScreen({ task, position, total, history = [], 
 
       <button
         onClick={onToggleNa}
-        className="tap pressable mt-4 flex w-full items-center justify-center rounded-[var(--radius-control)] bg-[color:var(--surface-2)] text-[14px] text-[color:var(--text-secondary)]"
+        className="tap pressable mt-4 flex w-full items-center justify-center rounded-sm bg-surface-2 text-xs text-ink-2"
       >
         {task.na ? 'This job does need it' : "Doesn't apply to this job"}
       </button>
 
-      <div className="mt-7 border-t border-[color:var(--border)] pt-5">
+      <div className="mt-8 border-t border-line pt-6">
         {task.attachments.length > 0 && (
-          <ul className="mb-3 flex flex-col gap-2">
+          <ul className="mb-2 flex flex-col gap-2">
             {task.attachments.map((a) => (
               <li key={a.id}>
                 {a.kind === 'photo' ? (
                   <img
                     src={a.src}
                     alt="Site photo"
-                    className="max-h-56 w-full rounded-[var(--radius-control)] object-cover"
+                    className="max-h-56 w-full rounded-sm object-cover"
                   />
                 ) : (
-                  <p className="rounded-[var(--radius-control)] bg-[color:var(--surface-2)] px-3 py-2 text-[14px] text-[color:var(--text-secondary)]">
+                  <p className="rounded-sm bg-surface-2 px-4 py-2 text-xs text-ink-2">
                     {a.text}
                   </p>
                 )}
@@ -76,12 +76,12 @@ export default function TaskDetailScreen({ task, position, total, history = [], 
             ))}
           </ul>
         )}
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-2 gap-2">
           {/* A real capture, not a placeholder. `capture="environment"` asks
               for the rear camera directly, so on a phone this opens the
               camera rather than a file browser — which is the difference
               between a demo people believe and one they don't. */}
-          <label className="tap pressable card flex cursor-pointer items-center justify-center gap-2 text-[15px]">
+          <label className="tap pressable card flex cursor-pointer items-center justify-center gap-2 text-sm">
             <Camera size={18} aria-hidden="true" /> Add photo
             <input
               type="file"
@@ -102,12 +102,12 @@ export default function TaskDetailScreen({ task, position, total, history = [], 
               tasks is a note nobody finds. */}
           <button
             onClick={onOpenNotes}
-            className="tap pressable card flex items-center justify-center gap-2 text-[15px]"
+            className="tap pressable card flex items-center justify-center gap-2 text-sm"
           >
             <StickyNote size={18} aria-hidden="true" /> Handover notes
           </button>
         </div>
-        <p className="mt-2 text-center text-[12px] text-[color:var(--text-muted)]">
+        <p className="mt-2 text-center text-xs text-ink-2">
           Prototype — the photo stays on this phone. Nothing is uploaded, and it doesn&apos;t
           survive a reload.
         </p>
@@ -120,21 +120,21 @@ export default function TaskDetailScreen({ task, position, total, history = [], 
           not somewhere else. The job screen still has the full list,
           grouped by task, for when the question is about the whole job. */}
       {history.length > 0 && (
-        <div className="mt-7 border-t border-[color:var(--border)] pt-5">
-          <h3 className="mb-2 text-[12px] font-semibold uppercase tracking-wide text-[color:var(--text-muted)]">
+        <div className="mt-8 border-t border-line pt-6">
+          <h3 className="mb-2 text-xs font-medium text-ink-2">
             History
           </h3>
           <ul className="card overflow-hidden">
             {history.map((entry, i) => (
               <li
                 key={`${entry.at}-${i}`}
-                className="flex items-baseline justify-between gap-3 border-b border-[color:var(--border)] px-4 py-2.5 last:border-b-0"
+                className="flex items-baseline justify-between gap-2 border-b border-line px-4 py-2 last:border-b-0"
               >
-                <span className="min-w-0 text-[14px] leading-snug">
+                <span className="min-w-0 text-xs leading-snug">
                   <span className="font-medium">{entry.by}</span>{' '}
-                  <span className="text-[color:var(--text-secondary)]">{describe(entry)}</span>
+                  <span className="text-ink-2">{describe(entry)}</span>
                 </span>
-                <span className="shrink-0 text-[12px] text-[color:var(--text-muted)]">
+                <span className="shrink-0 text-xs text-ink-2">
                   {relativeTime(entry.at)}
                 </span>
               </li>

@@ -423,7 +423,7 @@ export default function App() {
         actions={<SyncBadge status={sync} pending={pending} />}
       >
         {notice && (
-          <div className="mb-3 rounded-xl bg-[color:var(--status-warning-bg)] px-3 py-2 text-[13px] text-[color:var(--status-warning)]">
+          <div className="mb-2 rounded-xl bg-warn-bg px-4 py-2 text-xs text-warn">
             {notice}{' '}
             <button className="underline" onClick={() => setNotice(null)}>
               Dismiss

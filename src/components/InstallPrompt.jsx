@@ -65,15 +65,15 @@ export default function InstallPrompt() {
   if (!deferred && !showIosHint) return null
 
   return (
-    <div className="card mb-4 flex items-start gap-3 p-3">
+    <div className="card mb-4 flex items-start gap-2 p-4">
       <div className="min-w-0 flex-1">
-        <p className="text-[14px] font-medium">Add to your home screen</p>
+        <p className="text-xs font-medium">Add to your home screen</p>
         {deferred ? (
-          <p className="text-[13px] text-[color:var(--text-secondary)]">
+          <p className="text-xs text-ink-2">
             Opens like an app, without the browser bar.
           </p>
         ) : (
-          <p className="flex items-center gap-1 text-[13px] text-[color:var(--text-secondary)]">
+          <p className="flex items-center gap-1 text-xs text-ink-2">
             Tap <Share size={14} aria-hidden="true" /> then “Add to Home Screen”.
           </p>
         )}
@@ -85,12 +85,12 @@ export default function InstallPrompt() {
             await deferred.userChoice
             dismiss()
           }}
-          className="tap pressable shrink-0 rounded-[var(--radius-control)] bg-[color:var(--brand-green)] px-4 text-[14px] font-medium text-[color:var(--brand-green-ink)]"
+          className="tap pressable shrink-0 rounded-sm bg-accent px-4 text-xs font-medium text-accent-ink"
         >
           Add
         </button>
       )}
-      <button onClick={dismiss} aria-label="Dismiss" className="tap shrink-0 text-[color:var(--text-muted)]">
+      <button onClick={dismiss} aria-label="Dismiss" className="tap shrink-0 text-ink-2">
         <X size={18} />
       </button>
     </div>

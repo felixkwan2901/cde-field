@@ -9,11 +9,11 @@ export default function TodayScreen({ jobs, loading, onOpenJob }) {
 
   return (
     <>
-      <div className="card mb-5 flex items-center gap-4 p-4">
+      <div className="card mb-6 flex items-center gap-4 p-4">
         <ProgressRing progress={day} size={96} />
         <div className="min-w-0">
-          <p className="text-[15px] font-medium">{today()}</p>
-          <p className="text-[14px] text-[color:var(--text-secondary)]">
+          <p className="text-sm font-medium">{today()}</p>
+          <p className="text-xs text-ink-2">
             {jobs.length} job{jobs.length === 1 ? '' : 's'} · {progressCaption(day)}
           </p>
         </div>
@@ -34,20 +34,20 @@ export default function TodayScreen({ jobs, loading, onOpenJob }) {
               <li key={job.id}>
                 <button
                   onClick={() => onOpenJob(job.id)}
-                  className="card pressable flex w-full items-center gap-3 p-3 text-left"
+                  className="card pressable flex w-full items-center gap-2 p-4 text-left"
                 >
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-[16px] font-medium">
-                      <span className="text-[color:var(--text-muted)]">{job.jobNumber}</span> {job.jobName}
+                    <p className="truncate text-sm font-medium">
+                      <span className="text-ink-2">{job.jobNumber}</span> {job.jobName}
                     </p>
-                    <p className="truncate text-[14px] text-[color:var(--text-secondary)]">{job.site.address}</p>
-                    <p className="mt-0.5 truncate text-[13px] text-[color:var(--text-muted)]">
+                    <p className="truncate text-xs text-ink-2">{job.site.address}</p>
+                    <p className="mt-1 truncate text-xs text-ink-2">
                       {progressCaption(progress)}
                       {touched && ` · ${touched.updatedBy} ${relativeTime(touched.updatedAt)}`}
                     </p>
                   </div>
                   <ProgressRing progress={progress} size={54} stroke={6} />
-                  <ChevronRight size={20} className="shrink-0 text-[color:var(--text-muted)]" aria-hidden="true" />
+                  <ChevronRight size={20} className="shrink-0 text-ink-2" aria-hidden="true" />
                 </button>
               </li>
             )

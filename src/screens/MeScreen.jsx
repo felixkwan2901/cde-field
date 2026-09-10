@@ -12,13 +12,13 @@ import { initials } from '../lib/format'
 export default function MeScreen({ staff, role, theme, onToggleTheme, onSwitchStaff, onSwitchRole }) {
   return (
     <>
-      <div className="card mb-5 flex items-center gap-3 p-4">
-        <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-[color:var(--surface-2)] text-[18px] font-semibold">
+      <div className="card mb-6 flex items-center gap-2 p-4">
+        <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-surface-2 text-md font-medium">
           {initials(staff.name)}
         </span>
         <div className="min-w-0 flex-1">
-          <p className="truncate text-[18px] font-semibold">{staff.name}</p>
-          <p className="text-[14px] text-[color:var(--text-secondary)]">
+          <p className="truncate text-md font-medium">{staff.name}</p>
+          <p className="text-xs text-ink-2">
             {role === 'manager' ? 'Managing' : 'On site'}
           </p>
         </div>
@@ -27,14 +27,14 @@ export default function MeScreen({ staff, role, theme, onToggleTheme, onSwitchSt
       <InstallPrompt />
 
       <p className="list-label">Settings</p>
-      <div className="list-group mb-5">
+      <div className="list-group mb-6">
         <button className="list-row" onClick={onToggleTheme}>
           {theme === 'dark' ? <Sun size={20} aria-hidden="true" /> : <Moon size={20} aria-hidden="true" />}
           <span className="min-w-0 flex-1">
-            <span className="block text-[15px] font-medium">
+            <span className="block text-sm font-medium">
               {theme === 'dark' ? 'Light mode' : 'Dark mode'}
             </span>
-            <span className="block text-[13px] text-[color:var(--text-secondary)]">
+            <span className="block text-xs text-ink-2">
               {theme === 'dark'
                 ? 'Easier to read outdoors'
                 : 'Easier on the eyes in a ceiling space'}
@@ -49,10 +49,10 @@ export default function MeScreen({ staff, role, theme, onToggleTheme, onSwitchSt
             <ClipboardList size={20} aria-hidden="true" />
           )}
           <span className="min-w-0 flex-1">
-            <span className="block text-[15px] font-medium">
+            <span className="block text-sm font-medium">
               Switch to {role === 'manager' ? 'on site' : 'managing'}
             </span>
-            <span className="block text-[13px] text-[color:var(--text-secondary)]">
+            <span className="block text-xs text-ink-2">
               {role === 'manager' ? 'Your own jobs and tasks' : 'Every job and who is on it'}
             </span>
           </span>
@@ -61,8 +61,8 @@ export default function MeScreen({ staff, role, theme, onToggleTheme, onSwitchSt
         <button className="list-row" onClick={onSwitchStaff}>
           <LogOut size={20} aria-hidden="true" />
           <span className="min-w-0 flex-1">
-            <span className="block text-[15px] font-medium">Not you? Switch name</span>
-            <span className="block text-[13px] text-[color:var(--text-secondary)]">
+            <span className="block text-sm font-medium">Not you? Switch name</span>
+            <span className="block text-xs text-ink-2">
               Changes who updates are recorded against
             </span>
           </span>
@@ -72,8 +72,8 @@ export default function MeScreen({ staff, role, theme, onToggleTheme, onSwitchSt
       <p className="list-label">About</p>
       <div className="list-group">
         <div className="list-row">
-          <Info size={20} aria-hidden="true" className="text-[color:var(--text-secondary)]" />
-          <span className="min-w-0 flex-1 text-[13px] leading-relaxed text-[color:var(--text-secondary)]">
+          <Info size={20} aria-hidden="true" className="text-ink-2" />
+          <span className="min-w-0 flex-1 text-xs leading-relaxed text-ink-2">
             Prototype. Progress you record and the staff list are real and shared; the jobs,
             addresses and task lists are demonstration data, and photos stay on this phone.
             There is no sign-in — picking a name says who you are, it does not restrict

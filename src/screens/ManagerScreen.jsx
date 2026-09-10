@@ -27,7 +27,7 @@ export default function ManagerScreen({ section, jobs, roster, loading, onOpenJo
 
   return (
     <>
-      <div className="card mb-5 p-4">
+      <div className="card mb-6 p-4">
         <div className="grid grid-cols-3 gap-2 text-center">
           <Figure value={`${active.length}/${crew.length}`} label="Crew recording" />
           <Figure value={jobs.length - quiet.length} label="Jobs moving" />
@@ -42,24 +42,24 @@ export default function ManagerScreen({ section, jobs, roster, loading, onOpenJo
             key={person.name}
             className="list-row"
           >
-            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[color:var(--surface-2)] text-[13px] font-medium">
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-surface-2 text-xs font-medium">
               {initials(person.name)}
             </span>
             <div className="min-w-0 flex-1">
-              <p className="truncate text-[15px] font-medium">{person.name}</p>
+              <p className="truncate text-sm font-medium">{person.name}</p>
               {person.last ? (
                 <>
-                  <p className="truncate text-[13px] text-[color:var(--text-secondary)]">
+                  <p className="truncate text-xs text-ink-2">
                     {person.last.task} · {person.last.job}
                   </p>
-                  <p className="text-[12px] text-[color:var(--text-muted)]">
+                  <p className="text-xs text-ink-2">
                     {relativeTime(new Date(person.last.at).toISOString())} ·{' '}
                     {person.updates} update{person.updates === 1 ? '' : 's'} across{' '}
                     {person.jobs.length} job{person.jobs.length === 1 ? '' : 's'}
                   </p>
                 </>
               ) : (
-                <p className="text-[13px] text-[color:var(--text-muted)]">No activity yet</p>
+                <p className="text-xs text-ink-2">No activity yet</p>
               )}
             </div>
           </li>
@@ -91,28 +91,28 @@ function JobsSection({ jobs, onOpenJob }) {
               <li key={job.id}>
                 <button
                   onClick={() => onOpenJob(job.id)}
-                  className="card pressable flex w-full items-center gap-3 p-3 text-left"
+                  className="card pressable flex w-full items-center gap-2 p-4 text-left"
                 >
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-[16px] font-medium">
-                      <span className="text-[color:var(--text-muted)]">{job.jobNumber}</span>{' '}
+                    <p className="truncate text-sm font-medium">
+                      <span className="text-ink-2">{job.jobNumber}</span>{' '}
                       {job.jobName}
                     </p>
-                    <p className="truncate text-[13px] text-[color:var(--text-secondary)]">
+                    <p className="truncate text-xs text-ink-2">
                       {progressCaption(progress)}
                     </p>
-                    <p className="truncate text-[13px]">
+                    <p className="truncate text-xs">
                       {touched ? (
-                        <span className="text-[color:var(--text-muted)]">
+                        <span className="text-ink-2">
                           Last update {relativeTime(new Date(touched).toISOString())}
                         </span>
                       ) : (
-                        <span className="text-[color:var(--status-warning)]">Nothing recorded yet</span>
+                        <span className="text-warn">Nothing recorded yet</span>
                       )}
                     </p>
                   </div>
                   <ProgressRing progress={progress} size={54} stroke={6} />
-                  <ChevronRight size={20} className="shrink-0 text-[color:var(--text-muted)]" aria-hidden="true" />
+                  <ChevronRight size={20} className="shrink-0 text-ink-2" aria-hidden="true" />
                 </button>
               </li>
             )
@@ -126,12 +126,12 @@ function Figure({ value, label, tone }) {
   return (
     <div>
       <p
-        className="text-[24px] font-semibold tabular-nums"
+        className="text-xl font-medium tabular-nums"
         style={tone === 'warn' ? { color: 'var(--status-warning)' } : undefined}
       >
         {value}
       </p>
-      <p className="text-[12px] leading-tight text-[color:var(--text-secondary)]">{label}</p>
+      <p className="text-xs leading-tight text-ink-2">{label}</p>
     </div>
   )
 }

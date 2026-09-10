@@ -53,13 +53,13 @@ export default function JobHistoryScreen({ job }) {
     <div className="flex flex-col gap-4">
       {ordered.map((group) => (
         <section key={group.id}>
-          <div className="mb-1.5 flex items-baseline justify-between gap-3 px-1">
-            <h2 className="flex min-w-0 items-center gap-2 text-[15px] font-medium">
+          <div className="mb-1 flex items-baseline justify-between gap-2 px-1">
+            <h2 className="flex min-w-0 items-center gap-2 text-sm font-medium">
               {group.task && <TaskStatus task={group.task} />}
               <span className="min-w-0 truncate">{group.label}</span>
             </h2>
             {group.task && !group.task.na && typeof group.task.pct === 'number' && (
-              <span className="shrink-0 text-[15px] font-semibold tabular-nums">
+              <span className="shrink-0 text-sm font-medium tabular-nums">
                 {group.task.pct}%
               </span>
             )}
@@ -68,13 +68,13 @@ export default function JobHistoryScreen({ job }) {
             {group.entries.map((entry, i) => (
               <li
                 key={`${entry.at}-${i}`}
-                className="flex items-baseline justify-between gap-3 border-b border-[color:var(--border)] px-4 py-2.5 last:border-b-0"
+                className="flex items-baseline justify-between gap-2 border-b border-line px-4 py-2 last:border-b-0"
               >
-                <span className="min-w-0 text-[14px] leading-snug">
+                <span className="min-w-0 text-xs leading-snug">
                   <span className="font-medium">{entry.by}</span>{' '}
-                  <span className="text-[color:var(--text-secondary)]">{describe(entry)}</span>
+                  <span className="text-ink-2">{describe(entry)}</span>
                 </span>
-                <span className="shrink-0 text-[12px] text-[color:var(--text-muted)]">
+                <span className="shrink-0 text-xs text-ink-2">
                   {relativeTime(entry.at)}
                 </span>
               </li>

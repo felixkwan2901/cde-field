@@ -14,9 +14,9 @@ export default function StaffPickerScreen({ staff, loading, role, onPick }) {
   return (
     <div className="app-frame nav-fade">
       <div className="app-scroll mx-auto w-full max-w-md px-4">
-      <div className="safe-top pt-10 pb-6">
+      <div className="safe-top pt-8 pb-6">
         <h1 className="large-title">{managing ? 'Who are you?' : "Who's on site?"}</h1>
-        <p className="mt-1 text-[14px] text-[color:var(--text-secondary)]">
+        <p className="mt-1 text-xs text-ink-2">
           {managing
             ? 'Pick your name so your changes are recorded against it.'
             : "Pick your name to see today's jobs."}
@@ -39,10 +39,10 @@ export default function StaffPickerScreen({ staff, loading, role, onPick }) {
           {staff.map((person) => (
             <li key={person.id}>
               <button onClick={() => onPick(person)} className="list-row">
-                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[color:var(--surface-2)] text-[14px] font-medium">
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-surface-2 text-xs font-medium">
                   {initials(person.name)}
                 </span>
-                <span className="text-[17px]">{person.name}</span>
+                <span className="text-md">{person.name}</span>
               </button>
             </li>
           ))}

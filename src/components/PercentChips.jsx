@@ -31,7 +31,7 @@ export default function PercentChips({ value, onChange, disabled = false }) {
       // 3 + 2 below 360px rather than five shrunken chips. Reflow, never
       // shrink: shrinking sacrifices the exact property the control was
       // chosen for.
-      className="grid grid-cols-3 gap-3 min-[360px]:grid-cols-5"
+      className="grid grid-cols-3 gap-2 min-[360px]:grid-cols-5"
     >
       {OPTIONS.map((option, i) => {
         const selected = value === option
@@ -45,7 +45,7 @@ export default function PercentChips({ value, onChange, disabled = false }) {
             onClick={() => onChange(option)}
             // The last chip spans the empty column in the 3+2 layout so the
             // row doesn't end ragged.
-            className={`tap pressable flex h-16 items-center justify-center rounded-[var(--radius-control)] text-[19px] font-medium disabled:opacity-40 ${
+            className={`tap pressable flex h-16 items-center justify-center rounded-sm text-lg font-medium disabled:opacity-40 ${
               i === 4 ? 'col-span-1 max-[359px]:col-span-3' : ''
             } ${
               // Selected is a solid fill, not an outline: a filled block is
@@ -53,12 +53,13 @@ export default function PercentChips({ value, onChange, disabled = false }) {
               // and it is legible in greyscale, which an accent border is
               // not.
               selected
-                ? 'bg-[color:var(--brand-green)] text-[color:var(--brand-green-ink)] shadow-[0_2px_10px_-2px_rgba(23,134,74,0.5)]'
-                : 'card text-[color:var(--text-primary)]'
+                ? 'bg-accent text-accent-ink'
+                : 'border border-line-strong bg-surface text-ink'
             }`}
           >
             {option}
-            {selected && <span className="ml-0.5 text-[13px]">%</span>}
+            {/* ml-0.5 is optical, not layout: 2px between a figure and its unit. */}
+            {selected && <span className="ml-0.5 text-xs">%</span>}
           </button>
         )
       })}

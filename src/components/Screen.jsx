@@ -84,9 +84,9 @@ export default function Screen({
             <span className="w-3" />
           )}
           <div className={`navbar__title min-w-0 flex-1 px-1 ${showInline ? 'navbar__title--shown' : ''}`}>
-            <h1 className="truncate text-[16px] font-semibold leading-tight">{title}</h1>
+            <h1 className="truncate text-sm font-medium leading-tight">{title}</h1>
             {subtitle && (
-              <p className="truncate text-[12px] leading-tight text-[color:var(--text-secondary)]">
+              <p className="truncate text-xs leading-tight text-ink-2">
                 {subtitle}
               </p>
             )}
@@ -101,14 +101,14 @@ export default function Screen({
             <div className="pb-1 pt-2">
               <h2 className="large-title">{title}</h2>
               {subtitle && (
-                <p className="mt-0.5 text-[14px] text-[color:var(--text-secondary)]">{subtitle}</p>
+                <p className="mt-1 text-xs text-ink-2">{subtitle}</p>
               )}
             </div>
           )}
           {/* Sits where the large title ends, so "has it gone?" is a
               question about this element being on screen. */}
           <div ref={sentinelRef} aria-hidden="true" className="h-px" />
-          <div className="pt-3">{children}</div>
+          <div className="pt-4">{children}</div>
         </div>
       </div>
 
