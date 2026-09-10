@@ -28,6 +28,22 @@ const t = (id, name, area, pct = null, extra = {}) => ({
 
 const hoursAgo = (n) => new Date(Date.now() - n * 3600 * 1000).toISOString()
 
+// A task rarely goes straight to 100%. Somebody starts it, somebody else
+// picks it up, it sits at 75% for a week waiting on materials. `chain` turns
+// a shorthand into the entries that would have been written along the way, so
+// the demo's history reads like a real one rather than a single line.
+//
+// Fixture only. Anything actually recorded through the app comes from KV and
+// is merged over the top — see mergeRecordedProgress in dataSource.js.
+const chain = (taskId, steps) =>
+  steps.map(([to, by, hrs], i) => ({
+    t: taskId,
+    from: i === 0 ? null : steps[i - 1][0],
+    to,
+    by,
+    at: hoursAgo(hrs),
+  }))
+
 export const JOBS = [
   {
     id: '9412',
@@ -55,7 +71,32 @@ export const JOBS = [
     hazards: ['Live adjacent tenancy — isolate at DB2 only', 'Asbestos register on site office wall', 'Scissor lift in use in reception'],
     inductionRequired: true,
     dates: { start: '2026-08-04', target: '2026-10-17', thisWeek: 'Level 1 fit-off, plant room terminations' },
+    seedNotes: [
+      {
+        text: 'Consult room 4 has no ceiling access until the builder moves the scaffold. Left the last two light points out.',
+        by: 'Jake',
+        at: hoursAgo(50),
+      },
+      {
+        text: 'DB2 is live — the adjacent tenancy is still trading. Isolate at the main only, and let Dave know before you do.',
+        by: 'Tom Price',
+        at: hoursAgo(20),
+      },
+    ],
     assignedStaffIds: ['staff-1', 'staff-2', 'staff-3'],
+    // The story behind the percentages: three people, five weeks, a couple of
+    // tasks that stalled and were picked up by someone else.
+    seedHistory: [
+      ...chain('site-set-up-temporary-supply', [[50, 'Ben Dyer', 384], [100, 'Tom Price', 340]]),
+      ...chain('mark-out-set-out-from-drawings', [[25, 'Ben Dyer', 336], [75, 'Ben Dyer', 312], [100, 'Ben Dyer', 300]]),
+      ...chain('penetrations-cable-routes', [[50, 'Jake', 264], [75, 'Jake', 240], [100, 'Ben Dyer', 220]]),
+      ...chain('cable-tray-ducting-conduit', [[25, 'Jake', 168], [50, 'Jake', 96], [75, 'Jake', 48]]),
+      ...chain('rough-in-power', [[25, 'Ben Dyer', 120], [50, 'Ben Dyer', 72], [75, 'Ben Dyer', 26]]),
+      ...chain('rough-in-lighting', [[25, 'Jake', 120], [50, 'Jake', 26]]),
+      ...chain('rough-in-data-comms', [[25, 'Ben Dyer', 144], [50, 'Ben Dyer', 72]]),
+      ...chain('switchboard-install-termination', [[25, 'Tom Price', 3]]),
+      ...chain('sub-mains-distribution-boards', [[25, 'Tom Price', 3]]),
+    ],
     tasks: [
       t('site-set-up-temporary-supply', 'Site set-up & temporary supply', 'Whole site', 100, { updatedBy: 'Tom Price', updatedAt: hoursAgo(340) }),
       t('mark-out-set-out-from-drawings', 'Mark-out / set-out from drawings', 'Whole site', 100, { updatedBy: 'Ben Dyer', updatedAt: hoursAgo(300) }),
@@ -163,6 +204,13 @@ export const JOBS = [
     inductionRequired: false,
     dates: { start: '2026-08-25', target: '2026-09-05', thisWeek: 'Complete — awaiting COC' },
     assignedStaffIds: ['staff-1'],
+    seedHistory: [
+      ...chain('penetrations-cable-routes', [[50, 'Andy', 200], [100, 'Andy', 180]]),
+      ...chain('rough-in-power', [[50, 'Andy', 190], [100, 'Andy', 170]]),
+      ...chain('exterior-garage-circuits', [[75, 'Andy', 160], [100, 'Andy', 150]]),
+      ...chain('ev-charger', [[50, 'Andy', 145], [100, 'Andy', 140]]),
+      ...chain('testing-commissioning', [[100, 'Tom Price', 130]]),
+    ],
     tasks: [
       t('penetrations-cable-routes', 'Penetrations & cable routes', 'Garage', 100, { updatedBy: 'Andy', updatedAt: hoursAgo(180) }),
       t('rough-in-power', 'Rough-in — power', 'Garage', 100, { updatedBy: 'Andy', updatedAt: hoursAgo(170) }),

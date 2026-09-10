@@ -63,15 +63,22 @@ async function mergeRecordedProgress(job) {
     // Offline or the Worker is down: show the plan without the progress
     // rather than showing nothing.
   }
-  if (!record?.tasks) return job
   return {
     ...job,
-    // Carried through so the job screen can show who changed what. Newest
-    // first, because a history is read from the top.
-    history: [...(record.log ?? [])].reverse(),
-    notes: [...(record.notes ?? [])].reverse(),
+    // Newest first, because a history is read from the top.
+    //
+    // Real entries and fixture ones are merged rather than one replacing the
+    // other: the seeded chain is what happened before the demo started, and
+    // anything tapped during it should slot in above without erasing the
+    // backstory. Sorted by time, so the two interleave correctly.
+    history: [...(record?.log ?? []), ...(job.seedHistory ?? [])].sort(
+      (a, b) => new Date(b.at) - new Date(a.at),
+    ),
+    notes: [...(record?.notes ?? []), ...(job.seedNotes ?? [])].sort(
+      (a, b) => new Date(b.at) - new Date(a.at),
+    ),
     tasks: job.tasks.map((task) => {
-      const saved = record.tasks[task.id]
+      const saved = record?.tasks?.[task.id]
       return saved ? { ...task, pct: saved.pct, na: !!saved.na, updatedBy: saved.by, updatedAt: saved.at } : task
     }),
   }

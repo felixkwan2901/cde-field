@@ -11,8 +11,11 @@ import { relativeTime } from '../lib/format'
 //
 // Deliberately not editable and deliberately not deletable: the value of a
 // history is that nobody can quietly tidy it.
-export default function JobHistoryScreen({ job }) {
-  const entries = job.history ?? []
+export default function JobHistoryScreen({ job, taskId }) {
+  // Filtered to one task when you arrived from that task's screen, which is
+  // where "why is this at 100%" gets asked. Unfiltered from the job screen,
+  // where the question is "what has been happening here".
+  const entries = (job.history ?? []).filter((e) => !taskId || e.t === taskId)
   const labelFor = (taskId) => job.tasks.find((t) => t.id === taskId)?.name ?? taskId
 
   if (entries.length === 0) {

@@ -1,4 +1,4 @@
-import { Camera, StickyNote } from 'lucide-react'
+import { Camera, ChevronRight, StickyNote } from 'lucide-react'
 import PercentChips from '../components/PercentChips'
 import ProgressRing from '../components/ProgressRing'
 import TaskStatus from '../components/TaskStatus'
@@ -7,7 +7,7 @@ import { relativeTime } from '../lib/format'
 // The screen the demo lives or dies on. Top to bottom: what it is, what it
 // is at, how to change it, then the extras. The primary control sits in the
 // bottom two-thirds where a thumb reaches without shifting grip.
-export default function TaskDetailScreen({ task, position, total, onSetPercent, onToggleNa, onAttachPhoto, onOpenNotes }) {
+export default function TaskDetailScreen({ task, position, total, changes = 0, onSetPercent, onToggleNa, onAttachPhoto, onOpenNotes, onOpenHistory }) {
   return (
     <>
       <p className="text-[13px] text-[color:var(--text-muted)]">
@@ -40,10 +40,20 @@ export default function TaskDetailScreen({ task, position, total, onSetPercent, 
           />
         )}
         {!task.na && <TaskStatus task={task} showLabel />}
+        {/* The obvious question at 100% is "how did it get there, and who
+            said so". This line was already answering half of it, so it is
+            the way in rather than another button competing with the chips. */}
         {task.updatedBy && !task.na && (
-          <p className="text-[13px] text-[color:var(--text-secondary)]">
+          <button
+            onClick={onOpenHistory}
+            className="tap pressable -mb-2 flex items-center gap-1 rounded-[var(--radius-control)] px-2 text-[13px] text-[color:var(--text-secondary)]"
+          >
             Set by {task.updatedBy}, {relativeTime(task.updatedAt)}
-          </p>
+            {changes > 1 && (
+              <span className="text-[color:var(--text-muted)]">&nbsp;· {changes} changes</span>
+            )}
+            <ChevronRight size={15} aria-hidden="true" />
+          </button>
         )}
       </div>
 
