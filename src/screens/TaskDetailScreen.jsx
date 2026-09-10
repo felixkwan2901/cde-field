@@ -7,7 +7,7 @@ import { relativeTime } from '../lib/format'
 // The screen the demo lives or dies on. Top to bottom: what it is, what it
 // is at, how to change it, then the extras. The primary control sits in the
 // bottom two-thirds where a thumb reaches without shifting grip.
-export default function TaskDetailScreen({ task, position, total, onSetPercent, onToggleNa, onAttachPhoto, onAddNote }) {
+export default function TaskDetailScreen({ task, position, total, onSetPercent, onToggleNa, onAttachPhoto, onOpenNotes }) {
   return (
     <>
       <p className="text-[13px] text-[color:var(--text-muted)]">
@@ -97,11 +97,14 @@ export default function TaskDetailScreen({ task, position, total, onSetPercent, 
               }}
             />
           </label>
+          {/* Notes live on the job, not the task. "The ceiling grid isn't in
+              yet" is about the job, and a note buried under one of sixteen
+              tasks is a note nobody finds. */}
           <button
-            onClick={onAddNote}
+            onClick={onOpenNotes}
             className="tap pressable card flex items-center justify-center gap-2 text-[15px]"
           >
-            <StickyNote size={18} aria-hidden="true" /> Add note
+            <StickyNote size={18} aria-hidden="true" /> Handover notes
           </button>
         </div>
         <p className="mt-2 text-center text-[12px] text-[color:var(--text-muted)]">

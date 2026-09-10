@@ -12,7 +12,8 @@ import JobTasksScreen from './screens/JobTasksScreen'
 import TaskDetailScreen from './screens/TaskDetailScreen'
 import JobInfoScreen from './screens/JobInfoScreen'
 import JobHistoryScreen from './screens/JobHistoryScreen'
-import { getJob, listAllJobs, listJobsForStaff, listStaff, setTaskPercent, addAttachment } from './lib/dataSource'
+import JobNotesScreen from './screens/JobNotesScreen'
+import { addJobNote, getJob, listAllJobs, listJobsForStaff, listStaff, setTaskPercent, addAttachment } from './lib/dataSource'
 import { readStaff, writeStaff } from './lib/identity'
 import { applyTheme, readTheme } from './lib/theme'
 import { enqueue, readQueue, startFlushing } from './lib/outbox'
@@ -148,7 +149,11 @@ export default function App() {
       getJob(openJobId).then((fresh) => {
         if (!fresh) return
         setJobs((prev) =>
-          prev.map((j) => (j.id === fresh.id ? { ...j, tasks: fresh.tasks, history: fresh.history } : j)),
+          prev.map((j) =>
+            j.id === fresh.id
+              ? { ...j, tasks: fresh.tasks, history: fresh.history, notes: fresh.notes }
+              : j,
+          ),
         )
       })
     }, 15000)
@@ -214,26 +219,39 @@ export default function App() {
     }
   }
 
+  async function saveNote(text) {
+    const at = new Date().toISOString()
+    // Optimistic, same as a percentage: the note appears the moment it is
+    // written, and the badge — never the note — says whether it left.
+    setJobs((prev) =>
+      prev.map((j) =>
+        j.id !== job.id ? j : { ...j, notes: [{ text, by: staff.name, at }, ...(j.notes ?? [])] },
+      ),
+    )
+    const op = { kind: 'note', jobNumber: job.jobNumber, text, by: staff.name, at }
+    if (!navigator.onLine) {
+      setPending((await enqueue(op)).length)
+      setSync('offline')
+      return
+    }
+    setSync('saving')
+    markSaved()
+    try {
+      await addJobNote(op)
+      setSync('saved')
+      markSaved()
+    } catch {
+      setPending((await enqueue(op)).length)
+      setSync('offline')
+    }
+  }
+
   async function attachPhoto(file) {
     // An object URL, not a data URL: a phone camera produces a few megabytes,
     // and base64 in React state is that again by a third, held twice.
     await addAttachment(job.id, task.id, {
       kind: 'photo',
       src: URL.createObjectURL(file),
-      at: new Date().toISOString(),
-      by: staff.name,
-    })
-    setReloadKey((n) => n + 1)
-  }
-
-  async function addNote() {
-    const text = window.prompt('Note for this task')
-    if (!text?.trim()) return
-    await addAttachment(job.id, task.id, {
-      kind: 'note',
-      // Capped, and the reason is on the role screen: this app has no
-      // authentication, so a note is world-readable to anyone with the URL.
-      text: text.trim().slice(0, 140),
       at: new Date().toISOString(),
       by: staff.name,
     })
@@ -275,11 +293,14 @@ export default function App() {
           onOpenTask={(taskId) => setView({ name: 'task', jobId: job.id, taskId })}
           onOpenInfo={() => setView({ name: 'info', jobId: job.id })}
           onOpenHistory={() => setView({ name: 'history', jobId: job.id })}
+          onOpenNotes={() => setView({ name: 'notes', jobId: job.id })}
         />
       )
     }
     if (view.name === 'info') return <JobInfoScreen job={job} />
     if (view.name === 'history') return <JobHistoryScreen job={job} />
+    if (view.name === 'notes')
+      return <JobNotesScreen job={job} onAddNote={saveNote} saving={sync === 'saving'} />
     if (view.name === 'task' && task) {
       return (
         <TaskDetailScreen
@@ -291,7 +312,7 @@ export default function App() {
             saveTask(task, { pct: task.na ? task.pct : null, na: !task.na }, { pct: task.pct, na: task.na })
           }
           onAttachPhoto={attachPhoto}
-          onAddNote={addNote}
+          onOpenNotes={() => setView({ name: 'notes', jobId: job.id })}
         />
       )
     }
@@ -306,6 +327,7 @@ export default function App() {
     job: { title: job ? `${job.jobNumber} ${job.jobName}` : 'Job' },
     info: { title: 'Job info', subtitle: job?.jobName },
     history: { title: 'History', subtitle: job?.jobName },
+    notes: { title: 'Handover notes', subtitle: job?.jobName },
     report: { title: 'Meeting report', subtitle: 'Field progress' },
     task: { title: job ? job.jobName : 'Task' },
   }
@@ -314,6 +336,7 @@ export default function App() {
     job: () => setView({ name: 'today' }),
     info: () => setView({ name: 'job', jobId: view.jobId }),
     history: () => setView({ name: 'job', jobId: view.jobId }),
+    notes: () => setView({ name: 'job', jobId: view.jobId }),
     report: () => setView({ name: 'today' }),
     task: () => setView({ name: 'job', jobId: view.jobId }),
   }[view.name]

@@ -1,5 +1,5 @@
 import { get, set } from 'idb-keyval'
-import { setTaskPercent } from './dataSource'
+import { addJobNote, setTaskPercent } from './dataSource'
 
 // Progress recorded with no signal, held until there is some.
 //
@@ -36,8 +36,14 @@ async function writeQueue(ops) {
 export async function enqueue(op) {
   const queue = await readQueue()
   // Collapse repeats of the same task: sliding 20 -> 40 -> 60 while offline
-  // should produce one write and one log entry, not three.
-  const withoutTask = queue.filter((q) => !(q.jobNumber === op.jobNumber && q.taskId === op.taskId))
+  // should produce one write and one log entry, not three. Notes are never
+  // collapsed — each one is a separate thing somebody said.
+  const withoutTask =
+    op.kind === 'note'
+      ? queue
+      : queue.filter(
+          (q) => q.kind === 'note' || q.jobNumber !== op.jobNumber || q.taskId !== op.taskId,
+        )
   const next = [...withoutTask, { id: crypto.randomUUID?.() ?? String(Date.now()), tries: 0, ...op }]
   await writeQueue(next)
   return next
@@ -56,9 +62,17 @@ export async function flush() {
 
   for (const op of queue) {
     try {
-      const record = await setTaskPercentIfNewer(op)
-      if (record === 'stale') skipped.push(op)
-      else sent += 1
+      if (op.kind === 'note') {
+        // Appends need no staleness check: a note written three hours ago in
+        // a basement is still true when it lands, whatever anyone has added
+        // since. Only overwrites can be stale.
+        await addJobNote(op)
+        sent += 1
+      } else {
+        const record = await setTaskPercentIfNewer(op)
+        if (record === 'stale') skipped.push(op)
+        else sent += 1
+      }
     } catch {
       remaining.push({ ...op, tries: (op.tries ?? 0) + 1 })
     }

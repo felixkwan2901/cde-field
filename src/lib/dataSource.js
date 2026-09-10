@@ -69,6 +69,7 @@ async function mergeRecordedProgress(job) {
     // Carried through so the job screen can show who changed what. Newest
     // first, because a history is read from the top.
     history: [...(record.log ?? [])].reverse(),
+    notes: [...(record.notes ?? [])].reverse(),
     tasks: job.tasks.map((task) => {
       const saved = record.tasks[task.id]
       return saved ? { ...task, pct: saved.pct, na: !!saved.na, updatedBy: saved.by, updatedAt: saved.at } : task
@@ -116,6 +117,37 @@ export async function setTaskPercent({ jobNumber, taskId, pct, na = false, by })
     log: [...(record?.log ?? []), { t: taskId, from: previous, to: pct, na, by, at }].slice(-200),
   }
 
+  await writeKey(key, next)
+  return next
+}
+
+// A handover note on the job, so whoever turns up next knows where the last
+// person got to. Kept as a list rather than one editable field on purpose:
+// a single field is something two people overwrite, and "what did Ben say
+// last week" is exactly the question a note is for.
+//
+// An append, which is why it needs no staleness check anywhere — unlike a
+// percentage, a note written offline three hours ago is still true when it
+// finally lands, whatever anyone else has added since.
+export async function addJobNote({ jobNumber, text, by, at = new Date().toISOString() }) {
+  const key = `field:${jobNumber}`
+  let record
+  try {
+    record = await readKey(key)
+  } catch {
+    record = null
+  }
+  const next = {
+    v: 1,
+    jobNumber: String(jobNumber),
+    ...record,
+    updatedAt: at,
+    tasks: record?.tasks ?? {},
+    // Capped at fifty. At 280 characters each that is about 17KB, which sits
+    // comfortably beside the tasks and the change log inside the Worker's
+    // 100,000-character limit on a value.
+    notes: [...(record?.notes ?? []), { text, by, at }].slice(-50),
+  }
   await writeKey(key, next)
   return next
 }

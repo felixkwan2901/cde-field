@@ -1,4 +1,4 @@
-import { ChevronRight, History, MapPin } from 'lucide-react'
+import { ChevronRight, History, MapPin, MessageSquare } from 'lucide-react'
 import ProgressRing from '../components/ProgressRing'
 import ProgressBar from '../components/ProgressBar'
 import TaskStatus from '../components/TaskStatus'
@@ -6,7 +6,7 @@ import EmptyState from '../components/EmptyState'
 import { jobProgress, progressCaption } from '../lib/progress'
 import { relativeTime } from '../lib/format'
 
-export default function JobTasksScreen({ job, onOpenTask, onOpenInfo, onOpenHistory }) {
+export default function JobTasksScreen({ job, onOpenTask, onOpenInfo, onOpenHistory, onOpenNotes }) {
   const progress = jobProgress(job.tasks)
 
   // Grouped by area with a plain label, not a collapsible section. Folding
@@ -41,6 +41,32 @@ export default function JobTasksScreen({ job, onOpenTask, onOpenInfo, onOpenHist
           <MapPin size={18} className="shrink-0 text-[color:var(--text-muted)]" aria-hidden="true" />
           <span className="min-w-0 flex-1 truncate text-[14px]">{job.site.address}</span>
           <ChevronRight size={18} className="shrink-0 text-[color:var(--text-muted)]" aria-hidden="true" />
+        </button>
+
+        {/* The latest handover note, shown rather than hidden behind a tap.
+            It is the one thing on this screen someone else wrote for you,
+            and burying it a level down means it gets read by whoever goes
+            looking — which is the people who need it least. */}
+        <button
+          onClick={onOpenNotes}
+          className="tap pressable mt-4 flex w-full items-start gap-2 rounded-[var(--radius-control)] bg-[color:var(--surface-2)] px-3 py-2.5 text-left"
+        >
+          <MessageSquare size={18} className="mt-0.5 shrink-0 text-[color:var(--text-muted)]" aria-hidden="true" />
+          <span className="min-w-0 flex-1">
+            {job.notes?.length ? (
+              <>
+                <span className="line-clamp-2 text-[14px] leading-snug">{job.notes[0].text}</span>
+                <span className="mt-0.5 block text-[12px] text-[color:var(--text-muted)]">
+                  {job.notes[0].by} · {job.notes.length} note{job.notes.length === 1 ? '' : 's'}
+                </span>
+              </>
+            ) : (
+              <span className="text-[14px] text-[color:var(--text-muted)]">
+                Add a handover note
+              </span>
+            )}
+          </span>
+          <ChevronRight size={18} className="mt-0.5 shrink-0 text-[color:var(--text-muted)]" aria-hidden="true" />
         </button>
 
         {/* Several people work one job, so a percentage on its own does not
