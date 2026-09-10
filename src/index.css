@@ -225,18 +225,23 @@ body {
    - the 300ms wait for a possible double-tap-to-zoom before a tap counts;
    - text selection and the callout menu appearing when a finger rests on a
      button, which on a list of buttons is every long press. */
-* {
-  -webkit-tap-highlight-color: transparent;
-}
+@layer base {
+  * {
+    -webkit-tap-highlight-color: transparent;
+  }
 
-button,
-[role='button'],
-a,
-.chrome-text {
-  touch-action: manipulation;
-  -webkit-user-select: none;
-  user-select: none;
-  -webkit-touch-callout: none;
+  /* In a layer for the same reason the button reset is: unlayered, these
+     would beat a utility that contradicts them (select-text, touch-pan-y)
+     no matter how specific it was. */
+  button,
+  [role='button'],
+  a,
+  .chrome-text {
+    touch-action: manipulation;
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+  }
 }
 
 /* The screen frame owns the notch and the home indicator. */
@@ -537,12 +542,14 @@ a,
   line-height: 1;
 }
 
-button { color: inherit }` sitting outside a layer
-   was quietly overriding text-accent-ink on the one control in this app
-   whose whole job is to be legible: the selected percentage chip, which was
-   rendering near-black on dark green. `font: inherit` was doing the same to
-   every font-size utility on a button. Preflight already handles both; this
-   only exists for the shorthand. */
+/* Wrapped in @layer base rather than left bare. An unlayered rule beats
+   anything inside a layer no matter how specific, and Tailwind's utilities
+   are all layered — so `button { color: inherit }` sitting outside a layer
+   quietly overrides text-accent-ink on the one control in this app whose
+   whole job is to be legible: the selected percentage chip, which then
+   renders near-black on dark green. `font: inherit` does the same to every
+   font-size utility on a button. Preflight already handles both; this only
+   exists for the shorthand. */
 @layer base {
   button {
     font: inherit;
