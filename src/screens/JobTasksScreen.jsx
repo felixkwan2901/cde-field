@@ -31,14 +31,20 @@ export default function JobTasksScreen({
 
   return (
     <>
-      <div className="card mb-6 p-4">
-        <div className="flex items-center gap-4">
+      {/* One card, but three kinds of thing in it, and the design now says
+          so. Top: how much is done. Middle: what somebody else put there —
+          who is on site, and the last handover note. Bottom: the two doors
+          to another screen. Previously all four lower rows were identical
+          grey pills and the card had stopped having a shape. */}
+      <div className="card mb-6">
+        <div className="flex items-center gap-4 p-4">
           <ProgressRing progress={progress} size={84} />
           <div className="min-w-0">
             <p className="text-sm font-medium leading-tight">{job.jobName}</p>
             <p className="mt-1 text-xs text-ink-2">{progressCaption(progress)}</p>
           </div>
         </div>
+
         {/* Who is here, and when somebody last was. The percentage says how
             much of the job is done and nothing at all about whether anyone
             has been near it this week — which is what the office rings up to
@@ -48,12 +54,14 @@ export default function JobTasksScreen({
             a fact about the job; "on site 6h 12m" is a timesheet, and hours
             belong to the workbook. The full reasoning is at the top of
             lib/presence.js. */}
-        <div className="mt-4 flex items-center justify-between gap-3 rounded-sm bg-surface-2 px-4 py-2">
-          <p className="min-w-0 flex-1 text-xs leading-snug">
+        <div className="job-row justify-between">
+          <p className="min-w-0 flex-1 text-sm leading-snug">
             {onSite.length > 0 ? (
               <>
                 <span className="font-medium">{siteLine(onSite, me)}</span>
-                <span className="block text-ink-2">since {arrivalTime(onSite[0].at)}</span>
+                <span className="block text-xs text-ink-2">
+                  since {arrivalTime(onSite[0].at)}
+                </span>
               </>
             ) : everVisited ? (
               <span className="text-ink-2">
@@ -66,44 +74,31 @@ export default function JobTasksScreen({
               <span className="text-ink-2">No site visits recorded</span>
             )}
           </p>
+          {/* The only filled element on the card, because it is the only
+              thing on it you can do. */}
           <button
             onClick={() => onSetVisit(here ? 'left' : 'arrived')}
             className={`tap pressable shrink-0 rounded-sm px-4 text-sm font-medium ${
-              here ? 'bg-surface-1 text-ink' : 'bg-accent text-accent-ink'
+              here ? 'bg-surface-2 text-ink' : 'bg-accent text-accent-ink'
             }`}
           >
             {here ? 'Leaving' : "I'm here"}
           </button>
         </div>
 
-        {/* The address strip doubles as the door to the info screen. It is a
-            row you glance at anyway, so the common case costs no taps and no
-            extra screen space, and the rare case costs one tap where your
-            thumb already is. A tab bar at the top would permanently spend a
-            48px band on a screen you open ten times a day for something
-            else. */}
-        <button
-          onClick={onOpenInfo}
-          className="tap pressable mt-4 flex w-full items-center gap-2 rounded-sm bg-surface-2 px-4 py-2 text-left"
-        >
-          <MapPin size={18} className="shrink-0 text-ink-2" aria-hidden="true" />
-          <span className="min-w-0 flex-1 truncate text-xs">{job.site.address}</span>
-          <ChevronRight size={18} className="shrink-0 text-ink-2" aria-hidden="true" />
-        </button>
-
         {/* The latest handover note, shown rather than hidden behind a tap.
             It is the one thing on this screen someone else wrote for you,
             and burying it a level down means it gets read by whoever goes
-            looking — which is the people who need it least. */}
-        <button
-          onClick={onOpenNotes}
-          className="tap pressable mt-4 flex w-full items-start gap-2 rounded-sm bg-surface-2 px-4 py-2 text-left"
-        >
-          <MessageSquare size={18} className="mt-1 shrink-0 text-ink-2" aria-hidden="true" />
+            looking — which is the people who need it least.
+
+            Set at the body size rather than the navigation size: it is the
+            only prose on the card, and it is somebody talking to you. */}
+        <button onClick={onOpenNotes} className="tap job-row job-row--tap items-start">
+          <MessageSquare size={18} className="mt-0.5 shrink-0 text-ink-2" aria-hidden="true" />
           <span className="min-w-0 flex-1">
             {job.notes?.length ? (
               <>
-                <span className="line-clamp-2 text-xs leading-snug">
+                <span className="line-clamp-2 text-sm leading-snug">
                   {job.notes[0].fields?.did ?? job.notes[0].text}
                 </span>
                 <span className="mt-1 block text-xs text-ink-2">
@@ -111,26 +106,36 @@ export default function JobTasksScreen({
                 </span>
               </>
             ) : (
-              <span className="text-xs text-ink-2">
-                Add a handover note
-              </span>
+              <span className="text-sm text-ink-2">Add a handover note</span>
             )}
           </span>
-          <ChevronRight size={18} className="mt-1 shrink-0 text-ink-2" aria-hidden="true" />
+          <ChevronRight size={18} className="mt-0.5 shrink-0 text-ink-2" aria-hidden="true" />
+        </button>
+
+        {/* The two doors, kept quiet and kept together. The address strip
+            doubles as the way into the info screen: it is a row you glance at
+            anyway, so the common case costs no taps and the rare case costs
+            one where your thumb already is.
+
+            It wraps rather than truncating. "48 Wairakei Road, Bryndwr,
+            Christ…" cut off the suburb, which is the half you navigate by —
+            a truncation that removes the useful part is worse than a second
+            line. */}
+        <button onClick={onOpenInfo} className="tap job-row job-row--tap">
+          <MapPin size={18} className="shrink-0 text-ink-2" aria-hidden="true" />
+          <span className="min-w-0 flex-1 text-xs leading-snug text-ink-2">{job.site.address}</span>
+          <ChevronRight size={18} className="shrink-0 text-ink-2" aria-hidden="true" />
         </button>
 
         {/* Several people work one job, so a percentage on its own does not
-            say who moved it or when. The count is on the button because it
-            is the difference between "worth a look" and "nothing here". */}
-        <button
-          onClick={onOpenHistory}
-          className="tap pressable mt-2 flex w-full items-center gap-2 rounded-sm bg-surface-2 px-4 py-2 text-left"
-        >
+            say who moved it or when. The count is on the row because it is
+            the difference between "worth a look" and "nothing here". */}
+        <button onClick={onOpenHistory} className="tap job-row job-row--tap">
           <History size={18} className="shrink-0 text-ink-2" aria-hidden="true" />
-          <span className="min-w-0 flex-1 truncate text-xs">
+          <span className="min-w-0 flex-1 truncate text-xs text-ink-2">
             History
             {job.history?.length ? (
-              <span className="text-ink-2"> · {job.history.length} change{job.history.length === 1 ? '' : 's'}</span>
+              <span> · {job.history.length} change{job.history.length === 1 ? '' : 's'}</span>
             ) : null}
           </span>
           <ChevronRight size={18} className="shrink-0 text-ink-2" aria-hidden="true" />

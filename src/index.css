@@ -712,3 +712,56 @@ body {
     background: var(--surface-2);
   }
 }
+
+/* ---------- job summary card rows ---------- */
+
+/* The rows under a job's ring: who is on site, the last handover note, the
+   address, the history.
+ *
+ * These were four identical inset grey pills, and by the fourth the card had
+ * stopped saying anything. Every row had the same fill, the same height and
+ * the same weight, so nothing led and the eye had to read all four to find
+ * any one — the card grew a row at a time and each addition was reasonable
+ * on its own.
+ *
+ * They are not four of the same thing. Two are state somebody else put
+ * there (who is here, what the last person said) and two are doors to
+ * another screen. So: hairline-separated rows rather than pills, which is
+ * how a phone shows a list of related things, and the difference between
+ * the kinds is carried by type size and by exactly one filled element — the
+ * arrive/leave button, the only action on the card. */
+.job-row {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: var(--space-3);
+  min-height: 56px;
+  padding: var(--space-3);
+  text-align: left;
+  position: relative;
+}
+
+/* On every row including the first, which is what separates the list from
+   the ring above it. */
+.job-row::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: var(--space-3);
+  right: 0;
+  height: 1px;
+  background: var(--border);
+}
+
+/* Only the rows that go somewhere respond to a press. The state row holds a
+   button of its own, so highlighting the whole row would promise a tap that
+   does nothing. */
+.job-row--tap:active {
+  background: var(--surface-2);
+}
+
+@media (hover: hover) {
+  .job-row--tap:hover {
+    background: var(--surface-2);
+  }
+}
