@@ -432,7 +432,13 @@ export default function App() {
     map: { title: 'Map' },
     report: { title: 'Meeting report' },
     me: { title: 'Me' },
-    job: { title: job ? `${job.jobNumber} ${job.jobName}` : 'Job' },
+    // Split rather than concatenated. "9412 Northwood Medical Fit-out" is
+    // one string too long for the bar between a back chevron and the sync
+    // badge, and it truncated at "Fit-..." — losing the end of the name,
+    // which is the part that tells two fit-outs apart. The bar already
+    // stacks a title over a subtitle everywhere else; the name is what you
+    // know the site by, the number is what the QR code and the office use.
+    job: job ? { title: job.jobName, subtitle: `Job ${job.jobNumber}` } : { title: 'Job' },
     info: { title: 'Job info', subtitle: job?.jobName },
     history: { title: 'History', subtitle: job?.jobName },
     notes: { title: 'Handover notes', subtitle: job?.jobName },

@@ -37,12 +37,13 @@ export default function JobTasksScreen({
           to another screen. Previously all four lower rows were identical
           grey pills and the card had stopped having a shape. */}
       <div className="card mb-6">
+        {/* No job name here. This screen is pushed, so the bar shows its
+            title permanently rather than only once you scroll — printing the
+            name again 60px underneath it said nothing twice. The ring is the
+            content; the caption is what the ring cannot say. */}
         <div className="flex items-center gap-4 p-4">
           <ProgressRing progress={progress} size={84} />
-          <div className="min-w-0">
-            <p className="text-sm font-medium leading-tight">{job.jobName}</p>
-            <p className="mt-1 text-xs text-ink-2">{progressCaption(progress)}</p>
-          </div>
+          <p className="min-w-0 text-sm leading-snug">{progressCaption(progress)}</p>
         </div>
 
         {/* Who is here, and when somebody last was. The percentage says how
