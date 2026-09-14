@@ -765,3 +765,45 @@ body {
     background: var(--surface-2);
   }
 }
+
+/* ---------- folder tiles ---------- */
+
+/* The job screen's folders. Everything about a job that is not the task
+   list — how to get in, who to ring, what will hurt you, what the work is,
+   what people have written, what has changed — used to sit behind one row
+   called "Job info" and a five-section scroll. Standing at a gate wanting a
+   phone number, that is a tap and then a hunt.
+ *
+ * Two columns rather than three: the names are phrases, not words, and
+ * "Who to call" across a 105px tile is three lines. Two columns also match
+ * the staff picker, which is the app's other grid. */
+.tile-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-2);
+}
+
+.tile {
+  display: flex;
+  min-height: 84px;
+  width: 100%;
+  flex-direction: column;
+  justify-content: center;
+  gap: var(--space-1);
+  padding: var(--space-3);
+  text-align: left;
+  background: var(--surface-2);
+  border-radius: var(--radius-lg);
+  transition: background var(--motion) ease, transform var(--motion) ease;
+}
+
+.tile:active {
+  background: var(--surface-1);
+  transform: scale(0.97);
+}
+
+@media (hover: hover) {
+  .tile:hover {
+    background: var(--surface-1);
+  }
+}

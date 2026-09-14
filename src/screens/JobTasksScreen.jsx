@@ -1,4 +1,4 @@
-import { ChevronRight, History, MapPin, MessageSquare } from 'lucide-react'
+import { ChevronRight, History, MapPin, MessageSquare, Phone, TriangleAlert, Wrench } from 'lucide-react'
 import { arrivalTime, isOnSite, presence } from '../lib/presence'
 import ProgressRing from '../components/ProgressRing'
 import ProgressBar from '../components/ProgressBar'
@@ -35,11 +35,9 @@ export default function JobTasksScreen({
 
   return (
     <>
-      {/* One card, but three kinds of thing in it, and the design now says
-          so. Top: how much is done. Middle: what somebody else put there —
-          who is on site, and the last handover note. Bottom: the two doors
-          to another screen. Previously all four lower rows were identical
-          grey pills and the card had stopped having a shape. */}
+      {/* The card is now only the two live things: how much is done, and
+          whether anybody is there. Everything you navigate to moved into the
+          folders below it. */}
       <div className="card mb-6">
         {/* No job name here. This screen is pushed, so the bar shows its
             title permanently rather than only once you scroll — printing the
@@ -91,60 +89,64 @@ export default function JobTasksScreen({
           </button>
         </div>
 
-        {/* The latest handover note, shown rather than hidden behind a tap.
-            It is the one thing on this screen someone else wrote for you,
-            and burying it a level down means it gets read by whoever goes
-            looking — which is the people who need it least.
+      </div>
 
-            Set at the body size rather than the navigation size: it is the
-            only prose on the card, and it is somebody talking to you. */}
-        <button onClick={onOpenNotes} className="tap job-row job-row--tap items-start">
-          <MessageSquare size={18} className="mt-0.5 shrink-0 text-ink-2" aria-hidden="true" />
-          <span className="min-w-0 flex-1">
-            {job.notes?.length ? (
-              <>
-                <span className="line-clamp-2 text-sm leading-snug">
-                  {job.notes[0].fields?.did ?? job.notes[0].text}
-                </span>
-                <span className="mt-1 block text-xs text-ink-2">
-                  {job.notes[0].by} · {job.notes.length} note{job.notes.length === 1 ? '' : 's'}
-                </span>
-              </>
-            ) : (
-              <span className="text-sm text-ink-2">Add a handover note</span>
-            )}
-          </span>
-          <ChevronRight size={18} className="mt-0.5 shrink-0 text-ink-2" aria-hidden="true" />
-        </button>
+      {/* The folders. Everything about the job that is not the task list,
+          named by what you would be looking for rather than by where the
+          data happens to sit — and each says what is inside, so the detail
+          line answers "is it worth a tap" before you spend one.
 
-        {/* The two doors, kept quiet and kept together. The address strip
-            doubles as the way into the info screen: it is a row you glance at
-            anyway, so the common case costs no taps and the rare case costs
-            one where your thumb already is.
-
-            It wraps rather than truncating. "48 Wairakei Road, Bryndwr,
-            Christ…" cut off the suburb, which is the half you navigate by —
-            a truncation that removes the useful part is worse than a second
-            line. */}
-        <button onClick={onOpenInfo} className="tap job-row job-row--tap">
-          <MapPin size={18} className="shrink-0 text-ink-2" aria-hidden="true" />
-          <span className="min-w-0 flex-1 text-xs leading-snug text-ink-2">{job.site.address}</span>
-          <ChevronRight size={18} className="shrink-0 text-ink-2" aria-hidden="true" />
-        </button>
-
-        {/* Several people work one job, so a percentage on its own does not
-            say who moved it or when. The count is on the row because it is
-            the difference between "worth a look" and "nothing here". */}
-        <button onClick={onOpenHistory} className="tap job-row job-row--tap">
-          <History size={18} className="shrink-0 text-ink-2" aria-hidden="true" />
-          <span className="min-w-0 flex-1 truncate text-xs text-ink-2">
-            History
-            {job.history?.length ? (
-              <span> · {job.history.length} change{job.history.length === 1 ? '' : 's'}</span>
-            ) : null}
-          </span>
-          <ChevronRight size={18} className="shrink-0 text-ink-2" aria-hidden="true" />
-        </button>
+          This was three rows: one called "Job info" holding five different
+          things behind a scroll, one for notes, one for history. Standing at
+          a gate wanting the foreman's number, that was a tap and then a
+          hunt. */}
+      <div className="tile-grid mb-6">
+        <Folder
+          icon={MapPin}
+          name="Getting in"
+          detail={job.site.gateCode ? `Gate ${job.site.gateCode}` : 'Address & parking'}
+          onClick={() => onOpenInfo('access')}
+        />
+        <Folder
+          icon={Phone}
+          name="Who to call"
+          detail={`${job.contacts.length} ${job.contacts.length === 1 ? 'number' : 'numbers'}`}
+          onClick={() => onOpenInfo('contacts')}
+        />
+        <Folder
+          icon={TriangleAlert}
+          name="Safety"
+          detail={
+            job.inductionRequired
+              ? 'Induction required'
+              : `${job.hazards.length} ${job.hazards.length === 1 ? 'hazard' : 'hazards'}`
+          }
+          onClick={() => onOpenInfo('safety')}
+        />
+        <Folder
+          icon={Wrench}
+          name="The work"
+          detail="Scope & dates"
+          onClick={() => onOpenInfo('work')}
+        />
+        {/* Names who wrote the last one rather than only counting them.
+            "Tom Price" is the reason you would open it. */}
+        <Folder
+          icon={MessageSquare}
+          name="Notes"
+          detail={job.notes?.length ? `${job.notes.length} · ${job.notes[0].by}` : 'None yet'}
+          onClick={onOpenNotes}
+        />
+        <Folder
+          icon={History}
+          name="History"
+          detail={
+            job.history?.length
+              ? `${job.history.length} ${job.history.length === 1 ? 'change' : 'changes'}`
+              : 'Nothing yet'
+          }
+          onClick={onOpenHistory}
+        />
       </div>
 
       {job.tasks.length === 0 ? (
@@ -247,4 +249,17 @@ function siteLine(onSite, me) {
   if (others.length === 0) return "You're on site"
   if (others.length === 1) return `You and ${others[0]} on site`
   return `You and ${others.length} others on site`
+}
+
+// A folder: what it is, and what is in it. The detail line is the point — a
+// grid of six labels with no counts makes you open all six to find which one
+// has anything in it.
+function Folder({ icon: Icon, name, detail, onClick }) {
+  return (
+    <button onClick={onClick} className="tap tile">
+      <Icon size={20} className="text-ink-2" aria-hidden="true" />
+      <span className="text-sm font-medium leading-tight">{name}</span>
+      <span className="text-xs leading-tight text-ink-2">{detail}</span>
+    </button>
+  )
 }

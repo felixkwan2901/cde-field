@@ -48,6 +48,15 @@ const MANAGER_TABS = [
 
 const ROOT_VIEWS = new Set(['today', 'map', 'jobs', 'report', 'me'])
 
+// The folder you opened, named in the bar. Without this every one of them
+// said "Job info" and the back chevron was the only way to tell them apart.
+const INFO_TITLES = {
+  access: 'Getting in',
+  contacts: 'Who to call',
+  safety: 'Safety',
+  work: 'The work',
+}
+
 // Five linear screens, so navigation is a switch rather than a router. The
 // tripwire for adding one: if this passes about eight screens, or needs real
 // scroll restoration, take the dependency.
@@ -394,13 +403,13 @@ export default function App() {
           me={staff.name}
           onSetVisit={saveVisit}
           onOpenTask={(taskId) => navTo({ name: 'task', jobId: job.id, taskId })}
-          onOpenInfo={() => navTo({ name: 'info', jobId: job.id })}
+          onOpenInfo={(section) => navTo({ name: 'info', jobId: job.id, section })}
           onOpenHistory={() => navTo({ name: 'history', jobId: job.id })}
           onOpenNotes={() => navTo({ name: 'notes', jobId: job.id })}
         />
       )
     }
-    if (view.name === 'info') return <JobInfoScreen job={job} />
+    if (view.name === 'info') return <JobInfoScreen job={job} section={view.section} />
     if (view.name === 'history') return <JobHistoryScreen job={job} />
     if (view.name === 'notes')
       return <JobNotesScreen job={job} onAddNote={saveNote} saving={sync === 'saving'} />
@@ -443,7 +452,7 @@ export default function App() {
     job: job
       ? { title: job.jobName, subtitle: `${titleCase(job.type)} · Job ${job.jobNumber}` }
       : { title: 'Job' },
-    info: { title: 'Job info', subtitle: job?.jobName },
+    info: { title: INFO_TITLES[view.section] ?? 'Job info', subtitle: job?.jobName },
     history: { title: 'History', subtitle: job?.jobName },
     notes: { title: 'Handover notes', subtitle: job?.jobName },
     task: { title: job ? job.jobName : 'Task' },

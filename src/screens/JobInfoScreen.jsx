@@ -1,12 +1,15 @@
 // Read-only, ordered by what you need standing at a gate rather than by what
 // a database would list first: how to get in, who to ring, what the work is,
 // what will hurt you, when it's due.
+// The heading is dropped when this section is the whole screen: the nav bar
+// is already showing its name, and printing it again immediately underneath
+// is the same thing said twice.
 function Section({ title, children }) {
   return (
     <section className="mb-6">
-      <h2 className="mb-2 text-xs font-medium text-ink-2">
-        {title}
-      </h2>
+      {title && (
+        <h2 className="mb-2 text-xs font-medium text-ink-2">{title}</h2>
+      )}
       <div className="overflow-hidden rounded-2xl border border-line bg-surface">
         {children}
       </div>
@@ -37,10 +40,18 @@ function Field({ label, value, href, mono = false }) {
   )
 }
 
-export default function JobInfoScreen({ job }) {
+// One screen, six doors. `section` picks which part of it to show: the
+// folders on the job screen open straight into the one you asked for, rather
+// than dropping you at the top of a five-section scroll and leaving you to
+// find the phone numbers. Rendering them from one component rather than
+// splitting into five files keeps the field definitions in a single place —
+// the sections differ in what they list, not in how they behave.
+export default function JobInfoScreen({ job, section }) {
+  const show = (key) => !section || section === key
   return (
     <>
-      <Section title="Getting in">
+      {show('access') && (
+      <Section title={section ? null : 'Getting in'}>
         <Field
           label="Site address"
           value={job.site.address}
@@ -50,8 +61,10 @@ export default function JobInfoScreen({ job }) {
         <Field label="Parking" value={job.site.parking} />
         <Field label="Site hours" value={job.site.hours} />
       </Section>
+      )}
 
-      <Section title="Who to call">
+      {show('contacts') && (
+      <Section title={section ? null : 'Who to call'}>
         {job.contacts.map((c) => (
           <Field
             key={c.role}
@@ -61,15 +74,18 @@ export default function JobInfoScreen({ job }) {
           />
         ))}
       </Section>
+      )}
 
-      <Section title="The work">
+      {show('work') && (
+      <Section title={section ? null : 'The work'}>
         <Field label="Scope" value={job.scope} />
         <Field label="Switchboard" value={job.switchboardLocation} />
         <Field label="Supply" value={job.supply} />
       </Section>
+      )}
 
-      {(job.hazards.length > 0 || job.inductionRequired) && (
-        <Section title="Safety">
+      {show('safety') && (job.hazards.length > 0 || job.inductionRequired) && (
+        <Section title={section ? null : 'Safety'}>
           {job.inductionRequired && <Field label="Induction" value="Required before you start" />}
           {job.hazards.map((h, i) => (
             <Field key={i} label={`Hazard ${i + 1}`} value={h} />
@@ -77,11 +93,15 @@ export default function JobInfoScreen({ job }) {
         </Section>
       )}
 
+      {/* Dates sit with the work rather than in a folder of their own: "what
+          is this job and when is it due" is one question. */}
+      {show('work') && (
       <Section title="Dates">
         <Field label="Started" value={job.dates.start} />
         <Field label="Target finish" value={job.dates.target} />
         <Field label="This week" value={job.dates.thisWeek} />
       </Section>
+      )}
     </>
   )
 }
