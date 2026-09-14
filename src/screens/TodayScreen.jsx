@@ -37,11 +37,33 @@ export default function TodayScreen({ jobs, loading, onOpenJob }) {
                   className="card pressable flex w-full items-center gap-2 p-4 text-left"
                 >
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-medium">
-                      <span className="text-ink-2">{job.jobNumber}</span> {job.jobName}
+                    {/* Four jobs that all look like "number, name, address,
+                        caption" are four of the same card. Commercial and
+                        residential work are different days — different gear
+                        in the van, different people on site — so the kind of
+                        job leads, and the number drops into the same eyebrow
+                        with it. The name then gets the line to itself, which
+                        matches the job screen, where the name is the title
+                        and "Commercial · Job 9412" the subtitle. */}
+                    <p className="truncate text-xs uppercase tracking-wide text-ink-2">
+                      {job.type} · {job.jobNumber}
                     </p>
-                    <p className="truncate text-xs text-ink-2">{job.site.address}</p>
-                    <p className="mt-1 truncate text-xs text-ink-2">
+                    {/* The name is the identity, so it never gets cut. It
+                        sits on one line at 375px and wraps on the narrow
+                        phones where it would otherwise become "Northwood
+                        Medical ...". */}
+                    <p className="line-clamp-2 text-sm font-medium leading-snug">{job.jobName}</p>
+                    {/* Two lines rather than a truncation: every job here is
+                        a street and a suburb, and the suburb is how you tell
+                        them apart — it is the half that was being cut. */}
+                    <p className="line-clamp-2 text-xs leading-snug text-ink-2">
+                      {job.site.address}
+                    </p>
+                    {/* Wraps rather than truncating, for the same reason as
+                        the address: it was cutting the name off the person
+                        who last touched the job — "Tom Pric…" — which is the
+                        only part of the line you might act on. */}
+                    <p className="mt-1 line-clamp-2 text-xs leading-snug text-ink-2">
                       {progressCaption(progress)}
                       {touched && ` · ${touched.updatedBy} ${relativeTime(touched.updatedAt)}`}
                     </p>

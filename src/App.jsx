@@ -438,7 +438,11 @@ export default function App() {
     // which is the part that tells two fit-outs apart. The bar already
     // stacks a title over a subtitle everywhere else; the name is what you
     // know the site by, the number is what the QR code and the office use.
-    job: job ? { title: job.jobName, subtitle: `Job ${job.jobNumber}` } : { title: 'Job' },
+    // The kind of job rides with the number, because it is the thing that
+    // tells you what today looks like before you have read anything else.
+    job: job
+      ? { title: job.jobName, subtitle: `${titleCase(job.type)} · Job ${job.jobNumber}` }
+      : { title: 'Job' },
     info: { title: 'Job info', subtitle: job?.jobName },
     history: { title: 'History', subtitle: job?.jobName },
     notes: { title: 'Handover notes', subtitle: job?.jobName },
@@ -493,4 +497,10 @@ export default function App() {
       )}
     </>
   )
+}
+
+// 'commercial' -> 'Commercial'. One word, always, so this needs no more than
+// its first letter.
+function titleCase(word) {
+  return word ? word[0].toUpperCase() + word.slice(1) : ''
 }
