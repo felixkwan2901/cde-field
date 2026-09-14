@@ -1,4 +1,5 @@
 import { ChevronRight, History, MapPin, MessageSquare } from 'lucide-react'
+import { arrivalTime, isOnSite, presence } from '../lib/presence'
 import ProgressRing from '../components/ProgressRing'
 import ProgressBar from '../components/ProgressBar'
 import TaskStatus from '../components/TaskStatus'
@@ -6,8 +7,18 @@ import EmptyState from '../components/EmptyState'
 import { jobProgress, progressCaption } from '../lib/progress'
 import { relativeTime } from '../lib/format'
 
-export default function JobTasksScreen({ job, onOpenTask, onOpenInfo, onOpenHistory, onOpenNotes }) {
+export default function JobTasksScreen({
+  job,
+  me,
+  onSetVisit,
+  onOpenTask,
+  onOpenInfo,
+  onOpenHistory,
+  onOpenNotes,
+}) {
   const progress = jobProgress(job.tasks)
+  const { onSite, last, everVisited } = presence(job.visits)
+  const here = isOnSite(job.visits, me)
 
   // Grouped by area with a plain label, not a collapsible section. Folding
   // hides work, and on a job screen that is exactly the wrong default.
@@ -28,6 +39,43 @@ export default function JobTasksScreen({ job, onOpenTask, onOpenInfo, onOpenHist
             <p className="mt-1 text-xs text-ink-2">{progressCaption(progress)}</p>
           </div>
         </div>
+        {/* Who is here, and when somebody last was. The percentage says how
+            much of the job is done and nothing at all about whether anyone
+            has been near it this week — which is what the office rings up to
+            ask.
+
+            An arrival time, never an elapsed total. "On site since 8:12" is
+            a fact about the job; "on site 6h 12m" is a timesheet, and hours
+            belong to the workbook. The full reasoning is at the top of
+            lib/presence.js. */}
+        <div className="mt-4 flex items-center justify-between gap-3 rounded-sm bg-surface-2 px-4 py-2">
+          <p className="min-w-0 flex-1 text-xs leading-snug">
+            {onSite.length > 0 ? (
+              <>
+                <span className="font-medium">{siteLine(onSite, me)}</span>
+                <span className="block text-ink-2">since {arrivalTime(onSite[0].at)}</span>
+              </>
+            ) : everVisited ? (
+              <span className="text-ink-2">
+                Nobody on site · last here {relativeTime(last.at)}
+              </span>
+            ) : (
+              // Not "0 visits". Nobody having recorded a visit is the absence
+              // of a record, not evidence that nobody came — the same
+              // distinction the progress ring makes between no tasks and 0%.
+              <span className="text-ink-2">No site visits recorded</span>
+            )}
+          </p>
+          <button
+            onClick={() => onSetVisit(here ? 'left' : 'arrived')}
+            className={`tap pressable shrink-0 rounded-sm px-4 text-sm font-medium ${
+              here ? 'bg-surface-1 text-ink' : 'bg-accent text-accent-ink'
+            }`}
+          >
+            {here ? 'Leaving' : "I'm here"}
+          </button>
+        </div>
+
         {/* The address strip doubles as the door to the info screen. It is a
             row you glance at anyway, so the common case costs no taps and no
             extra screen space, and the rare case costs one tap where your
@@ -55,7 +103,9 @@ export default function JobTasksScreen({ job, onOpenTask, onOpenInfo, onOpenHist
           <span className="min-w-0 flex-1">
             {job.notes?.length ? (
               <>
-                <span className="line-clamp-2 text-xs leading-snug">{job.notes[0].text}</span>
+                <span className="line-clamp-2 text-xs leading-snug">
+                  {job.notes[0].fields?.did ?? job.notes[0].text}
+                </span>
                 <span className="mt-1 block text-xs text-ink-2">
                   {job.notes[0].by} · {job.notes.length} note{job.notes.length === 1 ? '' : 's'}
                 </span>
@@ -145,4 +195,22 @@ export default function JobTasksScreen({ job, onOpenTask, onOpenInfo, onOpenHist
       )}
     </>
   )
+}
+
+// "You and Jake" rather than "Andy, Jake" when one of them is you: the person
+// reading this knows they are on site, so leading with their own name spends
+// the only line on the screen saying something they can see by looking down.
+function siteLine(onSite, me) {
+  const names = onSite.map((v) => v.by)
+  const others = names.filter((n) => n !== me)
+  const iAmHere = names.length !== others.length
+
+  if (!iAmHere) {
+    if (others.length === 1) return `${others[0]} on site`
+    if (others.length === 2) return `${others[0]} and ${others[1]} on site`
+    return `${others[0]} and ${others.length - 1} others on site`
+  }
+  if (others.length === 0) return "You're on site"
+  if (others.length === 1) return `You and ${others[0]} on site`
+  return `You and ${others.length} others on site`
 }

@@ -16,7 +16,7 @@ import JobHistoryScreen from './screens/JobHistoryScreen'
 import JobNotesScreen from './screens/JobNotesScreen'
 import MapScreen from './screens/MapScreen'
 import MeScreen from './screens/MeScreen'
-import { addJobNote, getJob, listAllJobs, listJobsForStaff, listStaff, setTaskPercent, addAttachment } from './lib/dataSource'
+import { addJobNote, getJob, listAllJobs, listJobsForStaff, listStaff, recordVisit, setTaskPercent, addAttachment } from './lib/dataSource'
 import { readStaff, writeStaff } from './lib/identity'
 import { applyTheme, readTheme } from './lib/theme'
 import { enqueue, readQueue, startFlushing } from './lib/outbox'
@@ -196,7 +196,13 @@ export default function App() {
         setJobs((prev) =>
           prev.map((j) =>
             j.id === fresh.id
-              ? { ...j, tasks: fresh.tasks, history: fresh.history, notes: fresh.notes }
+              ? {
+                  ...j,
+                  tasks: fresh.tasks,
+                  history: fresh.history,
+                  notes: fresh.notes,
+                  visits: fresh.visits,
+                }
               : j,
           ),
         )
@@ -274,16 +280,18 @@ export default function App() {
     }
   }
 
-  async function saveNote(text) {
+  async function saveNote(text, fields) {
     const at = new Date().toISOString()
     // Optimistic, same as a percentage: the note appears the moment it is
     // written, and the badge — never the note — says whether it left.
     setJobs((prev) =>
       prev.map((j) =>
-        j.id !== job.id ? j : { ...j, notes: [{ text, by: staff.name, at }, ...(j.notes ?? [])] },
+        j.id !== job.id
+          ? j
+          : { ...j, notes: [{ text, fields, by: staff.name, at }, ...(j.notes ?? [])] },
       ),
     )
-    const op = { kind: 'note', jobNumber: job.jobNumber, text, by: staff.name, at }
+    const op = { kind: 'note', jobNumber: job.jobNumber, text, fields, by: staff.name, at }
     if (!navigator.onLine) {
       setPending((await enqueue(op)).length)
       setSync('offline')
@@ -293,6 +301,38 @@ export default function App() {
     markSaved()
     try {
       await addJobNote(op)
+      setSync('saved')
+      markSaved()
+    } catch {
+      setPending((await enqueue(op)).length)
+      setSync('offline')
+    }
+  }
+
+  // Arriving at or leaving a site. Optimistic like everything else here —
+  // the button flips on the tap, and the badge says whether it landed.
+  //
+  // Note what this does NOT do: it does not start a timer, accumulate a
+  // total, or pair the stamps into a session. It appends one fact. The
+  // reasoning is at the top of lib/presence.js and it is the whole reason
+  // this was safe to build.
+  async function saveVisit(action) {
+    const at = new Date().toISOString()
+    setJobs((prev) =>
+      prev.map((j) =>
+        j.id !== job.id ? j : { ...j, visits: [...(j.visits ?? []), { action, by: staff.name, at }] },
+      ),
+    )
+    const op = { kind: 'visit', jobNumber: job.jobNumber, action, by: staff.name, at }
+    if (!navigator.onLine) {
+      setPending((await enqueue(op)).length)
+      setSync('offline')
+      return
+    }
+    setSync('saving')
+    markSaved()
+    try {
+      await recordVisit(op)
       setSync('saved')
       markSaved()
     } catch {
@@ -351,6 +391,8 @@ export default function App() {
       return (
         <JobTasksScreen
           job={job}
+          me={staff.name}
+          onSetVisit={saveVisit}
           onOpenTask={(taskId) => navTo({ name: 'task', jobId: job.id, taskId })}
           onOpenInfo={() => navTo({ name: 'info', jobId: job.id })}
           onOpenHistory={() => navTo({ name: 'history', jobId: job.id })}

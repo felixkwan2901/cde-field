@@ -77,6 +77,9 @@ async function mergeRecordedProgress(job) {
     notes: [...(record?.notes ?? []), ...(job.seedNotes ?? [])].sort(
       (a, b) => new Date(b.at) - new Date(a.at),
     ),
+    // Oldest first, unlike the other two: presence() replays them in order
+    // to work out who is currently there, and sorting is its job anyway.
+    visits: [...(record?.visits ?? []), ...(job.seedVisits ?? [])],
     tasks: job.tasks.map((task) => {
       const saved = record?.tasks?.[task.id]
       return saved ? { ...task, pct: saved.pct, na: !!saved.na, updatedBy: saved.by, updatedAt: saved.at } : task
@@ -136,7 +139,7 @@ export async function setTaskPercent({ jobNumber, taskId, pct, na = false, by })
 // An append, which is why it needs no staleness check anywhere — unlike a
 // percentage, a note written offline three hours ago is still true when it
 // finally lands, whatever anyone else has added since.
-export async function addJobNote({ jobNumber, text, by, at = new Date().toISOString() }) {
+export async function addJobNote({ jobNumber, text, fields, by, at = new Date().toISOString() }) {
   const key = `field:${jobNumber}`
   let record
   try {
@@ -153,7 +156,45 @@ export async function addJobNote({ jobNumber, text, by, at = new Date().toISOStr
     // Capped at fifty. At 280 characters each that is about 17KB, which sits
     // comfortably beside the tasks and the change log inside the Worker's
     // 100,000-character limit on a value.
-    notes: [...(record?.notes ?? []), { text, by, at }].slice(-50),
+    // `text` is kept alongside the structured fields rather than replaced by
+    // them: it is what the job screen's preview and every note written
+    // before this change render from, and an app that stops showing old
+    // notes because the form changed is a worse app than one with a
+    // slightly redundant field.
+    notes: [...(record?.notes ?? []), { text, ...(fields ? { fields } : {}), by, at }].slice(-50),
+  }
+  await writeKey(key, next)
+  return next
+}
+
+// An arrival or a departure. An append, exactly like a note, and for the
+// same reason: it records something that happened at a moment, so nothing
+// later can make it untrue and nothing needs a staleness check.
+//
+// Deliberately NOT paired into sessions here. The record holds the stamps;
+// working out who is on site now is presence.js's job, and keeping the two
+// apart is what stops a "session" growing a duration the first time someone
+// asks how long the crew was there. See the note at the top of presence.js.
+export async function recordVisit({ jobNumber, action, by, at = new Date().toISOString() }) {
+  const key = `field:${jobNumber}`
+  let record
+  try {
+    record = await readKey(key)
+  } catch {
+    record = null
+  }
+  const next = {
+    v: 1,
+    jobNumber: String(jobNumber),
+    ...record,
+    updatedAt: at,
+    tasks: record?.tasks ?? {},
+    // Capped at a hundred. Two people arriving and leaving each day is four
+    // entries, so a hundred is about five weeks of a two-hander — longer
+    // than anyone looks back — and at roughly 70 bytes an entry it is 7KB
+    // beside the tasks, the log and the notes inside the Worker's
+    // 100,000-character limit.
+    visits: [...(record?.visits ?? []), { action, by, at }].slice(-100),
   }
   await writeKey(key, next)
   return next

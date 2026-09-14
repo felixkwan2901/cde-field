@@ -1,5 +1,5 @@
 import { get, set } from 'idb-keyval'
-import { addJobNote, setTaskPercent } from './dataSource'
+import { addJobNote, recordVisit, setTaskPercent } from './dataSource'
 
 // Progress recorded with no signal, held until there is some.
 //
@@ -38,12 +38,15 @@ export async function enqueue(op) {
   // Collapse repeats of the same task: sliding 20 -> 40 -> 60 while offline
   // should produce one write and one log entry, not three. Notes are never
   // collapsed — each one is a separate thing somebody said.
-  const withoutTask =
-    op.kind === 'note'
-      ? queue
-      : queue.filter(
-          (q) => q.kind === 'note' || q.jobNumber !== op.jobNumber || q.taskId !== op.taskId,
-        )
+  //
+  // Notes and visits are never collapsed — each one is a separate thing that
+  // happened. Collapsing two arrivals would erase a trip to site.
+  const isAppend = (o) => o.kind === 'note' || o.kind === 'visit'
+  const withoutTask = isAppend(op)
+    ? queue
+    : queue.filter(
+        (q) => isAppend(q) || q.jobNumber !== op.jobNumber || q.taskId !== op.taskId,
+      )
   const next = [...withoutTask, { id: crypto.randomUUID?.() ?? String(Date.now()), tries: 0, ...op }]
   await writeQueue(next)
   return next
@@ -62,11 +65,12 @@ export async function flush() {
 
   for (const op of queue) {
     try {
-      if (op.kind === 'note') {
+      if (op.kind === 'note' || op.kind === 'visit') {
         // Appends need no staleness check: a note written three hours ago in
         // a basement is still true when it lands, whatever anyone has added
-        // since. Only overwrites can be stale.
-        await addJobNote(op)
+        // since, and so is "I arrived at 07:40". Only overwrites can be
+        // stale.
+        await (op.kind === 'visit' ? recordVisit(op) : addJobNote(op))
         sent += 1
       } else {
         const record = await setTaskPercentIfNewer(op)
