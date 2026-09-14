@@ -4,7 +4,7 @@ import ProgressRing from '../components/ProgressRing'
 import ProgressBar from '../components/ProgressBar'
 import TaskStatus from '../components/TaskStatus'
 import EmptyState from '../components/EmptyState'
-import { jobProgress, progressCaption } from '../lib/progress'
+import { groupShares, jobProgress, progressCaption } from '../lib/progress'
 import { relativeTime } from '../lib/format'
 
 export default function JobTasksScreen({
@@ -28,6 +28,10 @@ export default function JobTasksScreen({
     map.set(task.area, list)
     return map
   }, new Map())
+
+  // Computed together rather than per area, because making them add to
+  // exactly 100 needs to see all of them at once.
+  const shares = groupShares([...areas.values()])
 
   return (
     <>
@@ -154,11 +158,26 @@ export default function JobTasksScreen({
         // and fourteen gaps of dead space to scroll past; grouping them
         // makes the area the object on screen and the tasks its contents,
         // which is also what the heading has been claiming all along.
-        [...areas].map(([area, tasks]) => (
+        [...areas].map(([area, tasks], areaIndex) => (
           <section key={area} className="mb-6">
-            <p className="list-label">{area}</p>
+            {/* The area's share of the whole job, and across the areas these
+                add to exactly 100%. Every counted task is worth the same
+                slice — the job figure is an unweighted mean — so an area's
+                share is simply how much of the job lives in it. It sits on
+                the heading rather than on every row because on a row it
+                would be the same number fifteen times, and because this is
+                the line that already says "here is a section of the job". */}
+            <p className="list-label flex items-baseline justify-between gap-2">
+              <span>{area}</span>
+              {shares[areaIndex] != null && (
+                <span className="font-normal tabular-nums">{shares[areaIndex]}% of job</span>
+              )}
+            </p>
             <ul className="list-group">
-              {tasks.map((task) => (
+              {tasks.map((task) => {
+                const partial =
+                  !task.na && typeof task.pct === 'number' && task.pct > 0 && task.pct < 100
+                return (
                 <li key={task.id}>
                   <button
                     onClick={() => onOpenTask(task.id)}
@@ -177,9 +196,17 @@ export default function JobTasksScreen({
                         </span>
                         <span className="min-w-0">{task.name}</span>
                       </p>
-                      <div className="mt-2">
-                        <ProgressBar pct={task.pct} na={task.na} />
-                      </div>
+                      {/* The bar only appears while a task is part-done.
+                          At 0% it is an empty trough and at 100% it is a
+                          full one, and in both cases the dot and the figure
+                          beside it have already said so — it was spending a
+                          whole line per row to repeat them. Between the two
+                          it shows something neither can: roughly how far. */}
+                      {partial && (
+                        <div className="mt-1.5">
+                          <ProgressBar pct={task.pct} na={task.na} />
+                        </div>
+                      )}
                       {task.updatedBy && (
                         <p className="mt-1 truncate text-xs text-ink-2">
                           {task.updatedBy} · {relativeTime(task.updatedAt)}
@@ -194,7 +221,8 @@ export default function JobTasksScreen({
                     <ChevronRight size={18} className="shrink-0 self-start pt-1 text-ink-2" aria-hidden="true" />
                   </button>
                 </li>
-              ))}
+                )
+              })}
             </ul>
           </section>
         ))

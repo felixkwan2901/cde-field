@@ -1,6 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { dayProgress, jobProgress, progressCaption } from '../progress.js'
+import { dayProgress, groupShares, jobProgress, progressCaption } from '../progress.js'
 
 const task = (pct, extra = {}) => ({ id: String(Math.random()), pct, ...extra })
 
@@ -71,4 +71,40 @@ test('the day roll-up pools tasks rather than averaging job averages', () => {
 test('an empty day is no-data, not zero', () => {
   assert.equal(dayProgress([]).state, 'no-data')
   assert.equal(dayProgress([{ tasks: [] }]).state, 'no-data')
+})
+
+// --- group shares -----------------------------------------------------
+
+test('shares are proportional to how many tasks an area holds', () => {
+  const shares = groupShares([[task(0), task(0)], [task(0), task(0)], [task(0)]])
+  assert.deepEqual(shares, [40, 40, 20])
+})
+
+test('shares add to exactly 100, not 99', () => {
+  // Three fives are 33.33% each. Rounded independently that totals 99.
+  const shares = groupShares([[task(0), task(0), task(0), task(0), task(0)],
+                              [task(0), task(0), task(0), task(0), task(0)],
+                              [task(0), task(0), task(0), task(0), task(0)]])
+  assert.equal(shares.reduce((a, b) => a + b, 0), 100)
+})
+
+test('the leftover point goes to a biggest group, never a smallest', () => {
+  const shares = groupShares([[task(0), task(0), task(0)], [task(0), task(0), task(0)], [task(0)]])
+  assert.equal(shares.reduce((a, b) => a + b, 0), 100)
+  assert.ok(shares[0] >= shares[2] && shares[1] >= shares[2])
+})
+
+test('an N/A task is worth no share of the job', () => {
+  const shares = groupShares([[task(0), task(null, { na: true })], [task(0)]])
+  assert.deepEqual(shares, [50, 50], 'the N/A task adds nothing to its area')
+})
+
+test('a job whose every task is N/A has no shares to give', () => {
+  assert.deepEqual(groupShares([[task(null, { na: true })], [task(null, { na: true })]]), [null, null])
+})
+
+test('a share does not depend on how much of the work is done', () => {
+  const a = groupShares([[task(100), task(100)], [task(0), task(0)]])
+  const b = groupShares([[task(0), task(0)], [task(0), task(0)]])
+  assert.deepEqual(a, b, 'share is how big the area is, not how far along it is')
 })
