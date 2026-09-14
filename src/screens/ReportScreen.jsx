@@ -1,6 +1,6 @@
 import { Printer } from 'lucide-react'
 import { crewActivity, lastTouched } from '../lib/crewActivity'
-import { jobProgress } from '../lib/progress'
+import { dayProgress, jobProgress } from '../lib/progress'
 import { relativeTime } from '../lib/format'
 
 // Something to put on the table at a meeting: progress by job, activity by
@@ -12,7 +12,11 @@ import { relativeTime } from '../lib/format'
 // black on white regardless of the theme.
 export default function ReportScreen({ jobs, roster }) {
   const crew = crewActivity(jobs, roster)
+  const active = crew.filter((p) => p.last)
+  const silent = crew.filter((p) => !p.last)
   const ordered = [...jobs].sort((a, b) => (lastTouched(b) ?? 0) - (lastTouched(a) ?? 0))
+  const quiet = jobs.filter((j) => !lastTouched(j))
+  const overall = dayProgress(jobs)
   const printedAt = new Date()
 
   return (
@@ -32,6 +36,24 @@ export default function ReportScreen({ jobs, roster }) {
           Print
         </button>
       </div>
+
+      {/* The answer before the evidence. Somebody handed this across a table
+          should be able to read the first line and know where things stand;
+          the two tables underneath are for the questions that follow. */}
+      <p className="mb-6 text-sm leading-snug">
+        {jobs.length} job{jobs.length === 1 ? '' : 's'},{' '}
+        {overall.state === 'no-data' ? 'nothing recorded yet' : `${overall.percent}% recorded overall`}
+        {quiet.length > 0 && (
+          <>
+            {' · '}
+            <span className="font-medium">
+              {quiet.length} with nothing recorded
+            </span>
+          </>
+        )}
+        {'. '}
+        {active.length} of {crew.length} crew have recorded something.
+      </p>
 
       <h3 className="report-heading">Progress by job</h3>
       <table className="report-table">
@@ -76,7 +98,7 @@ export default function ReportScreen({ jobs, roster }) {
           </tr>
         </thead>
         <tbody>
-          {crew.map((person) => (
+          {active.map((person) => (
             <tr key={person.name}>
               <td>
                 {person.name}
@@ -84,17 +106,29 @@ export default function ReportScreen({ jobs, roster }) {
                   <span className="text-ink-2"> (not on roster)</span>
                 )}
               </td>
-              <td className="num">{person.updates || '—'}</td>
-              <td className="num">{person.jobs.length || '—'}</td>
+              <td className="num">{person.updates}</td>
+              <td className="num">{person.jobs.length}</td>
               <td>
-                {person.last
-                  ? `${person.last.task} · ${relativeTime(new Date(person.last.at).toISOString())}`
-                  : 'No activity'}
+                {person.last.task} · {relativeTime(new Date(person.last.at).toISOString())}
               </td>
             </tr>
           ))}
         </tbody>
       </table>
+
+      {/* The people who recorded nothing, as a sentence rather than fourteen
+          rows of dashes. Who recorded nothing is the more useful half of
+          this report — it is either someone who needs showing how, or a sign
+          the app is not being used on that site — so the names stay. What
+          goes is a table three quarters full of "— — No activity", which on
+          a printed page is a wall of nothing that makes the five rows that
+          matter harder to find. */}
+      {silent.length > 0 && (
+        <p className="mt-4 text-xs leading-relaxed text-ink-2">
+          <span className="font-medium">Recorded nothing this period ({silent.length}):</span>{' '}
+          {silent.map((p) => p.name).join(', ')}.
+        </p>
+      )}
 
       <p className="mt-6 text-xs leading-relaxed text-ink-2">
         Percentages are what the crew recorded on site — an unweighted average across each

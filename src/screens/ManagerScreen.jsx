@@ -1,4 +1,5 @@
-import { ChevronRight } from 'lucide-react'
+import { useState } from 'react'
+import { ChevronDown, ChevronRight } from 'lucide-react'
 import ProgressRing from '../components/ProgressRing'
 import { SkeletonRows } from '../components/EmptyState'
 import { crewActivity, lastTouched } from '../lib/crewActivity'
@@ -16,28 +17,64 @@ import { relativeTime, initials } from '../lib/format'
 //
 // No map here. Knowing where a site is matters when you are driving to it;
 // from a desk the useful thing is the list.
-export default function ManagerScreen({ section, jobs, roster, loading, onOpenJob }) {
+export default function ManagerScreen({ section, jobs, roster, loading, onOpenJob, onOpenSection }) {
+  const [showSilent, setShowSilent] = useState(false)
+
   if (loading) return <SkeletonRows count={4} />
 
   const crew = crewActivity(jobs, roster)
   const active = crew.filter((p) => p.last)
+  const silent = crew.filter((p) => !p.last)
   const quiet = jobs.filter((j) => !lastTouched(j))
 
   if (section === 'jobs') return <JobsSection jobs={jobs} onOpenJob={onOpenJob} />
 
   return (
     <>
+      {/* One sentence about whether anything needs a look, rather than three
+          figures in three different units. "5/19 · 3 · 1" sat under a heading
+          saying Crew while two thirds of it counted jobs, and left you to
+          work out for yourself which of the numbers was the bad one.
+
+          The exception leads. On a morning when nothing is wrong this says
+          so in a line and a manager can put the phone down, which is the
+          whole job of a screen like this. */}
       <div className="card mb-6 p-4">
-        <div className="grid grid-cols-3 gap-2 text-center">
-          <Figure value={`${active.length}/${crew.length}`} label="Crew recording" />
-          <Figure value={jobs.length - quiet.length} label="Jobs moving" />
-          <Figure value={quiet.length} label="Nothing recorded" tone={quiet.length ? 'warn' : undefined} />
-        </div>
+        {quiet.length > 0 ? (
+          <button
+            onClick={() => onOpenSection?.('jobs')}
+            className="tap pressable flex w-full items-center gap-2 text-left"
+          >
+            <span className="min-w-0 flex-1">
+              <span className="block text-sm font-medium text-warn">
+                {quiet.length} job{quiet.length === 1 ? ' has' : 's have'} nothing recorded
+              </span>
+              <span className="mt-1 block text-xs text-ink-2">
+                {jobs.length - quiet.length} of {jobs.length} moving · tap to see them
+              </span>
+            </span>
+            <ChevronRight size={18} className="shrink-0 text-ink-2" aria-hidden="true" />
+          </button>
+        ) : (
+          <p className="text-sm">
+            <span className="block font-medium">Every job has progress recorded</span>
+            <span className="mt-1 block text-xs text-ink-2">
+              {jobs.length} job{jobs.length === 1 ? '' : 's'} on the go
+            </span>
+          </p>
+        )}
       </div>
 
-      <p className="list-label">Crew</p>
+      {/* The count moves onto the heading. It was the one genuinely useful
+          figure in the row of three, and it belongs on the list it counts. */}
+      <p className="list-label flex items-baseline justify-between gap-2">
+        <span>Recording</span>
+        <span className="font-normal tabular-nums">
+          {active.length} of {crew.length}
+        </span>
+      </p>
       <ul className="list-group">
-        {crew.map((person) => (
+        {active.map((person) => (
           <li
             key={person.name}
             className="list-row"
@@ -49,7 +86,10 @@ export default function ManagerScreen({ section, jobs, roster, loading, onOpenJo
               <p className="truncate text-sm font-medium">{person.name}</p>
               {person.last ? (
                 <>
-                  <p className="truncate text-xs text-ink-2">
+                  {/* Wraps: "Switchboard install & termination · Nor…" cut
+                      the job name off the task, and which job it was on is
+                      half of what the line is for. */}
+                  <p className="line-clamp-2 text-xs leading-snug text-ink-2">
                     {person.last.task} · {person.last.job}
                   </p>
                   <p className="text-xs text-ink-2">
@@ -66,6 +106,43 @@ export default function ManagerScreen({ section, jobs, roster, loading, onOpenJo
         ))}
       </ul>
 
+      {/* Everybody who has recorded nothing, folded into one row.
+          Who has recorded nothing is genuinely the more useful half of this
+          list — a name with no activity is either someone who needs showing
+          how, or a sign the app is not being used on that site — but as
+          fourteen identical rows saying "No activity yet" it buried the five
+          people who had done something and pushed them off the screen. It is
+          one line that you open when you want it. */}
+      {silent.length > 0 && (
+        <>
+          <button
+            onClick={() => setShowSilent((v) => !v)}
+            aria-expanded={showSilent}
+            className="tap list-label mt-6 flex w-full items-center gap-2 text-left"
+          >
+            <ChevronDown
+              size={16}
+              aria-hidden="true"
+              className="shrink-0 transition-transform"
+              style={{ transform: showSilent ? 'none' : 'rotate(-90deg)' }}
+            />
+            <span className="min-w-0 flex-1">Nothing recorded</span>
+            <span className="shrink-0 font-normal tabular-nums">{silent.length}</span>
+          </button>
+          {showSilent && (
+            <ul className="list-group">
+              {silent.map((person) => (
+                <li key={person.name} className="list-row">
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-surface-2 text-xs font-medium">
+                    {initials(person.name)}
+                  </span>
+                  <p className="min-w-0 flex-1 truncate text-sm">{person.name}</p>
+                </li>
+              ))}
+            </ul>
+          )}
+        </>
+      )}
     </>
   )
 }
@@ -122,16 +199,4 @@ function JobsSection({ jobs, onOpenJob }) {
   )
 }
 
-function Figure({ value, label, tone }) {
-  return (
-    <div>
-      <p
-        className="text-xl font-medium tabular-nums"
-        style={tone === 'warn' ? { color: 'var(--status-warning)' } : undefined}
-      >
-        {value}
-      </p>
-      <p className="text-xs leading-tight text-ink-2">{label}</p>
-    </div>
-  )
-}
+

@@ -385,7 +385,14 @@ export default function App() {
     }
     if (view.name === 'today') {
       return role === 'manager' ? (
-        <ManagerScreen section="crew" jobs={jobs} roster={roster} loading={jobsLoading} onOpenJob={openJob} />
+        <ManagerScreen
+          section="crew"
+          jobs={jobs}
+          roster={roster}
+          loading={jobsLoading}
+          onOpenJob={openJob}
+          onOpenSection={(key) => navTo({ name: key })}
+        />
       ) : (
         <TodayScreen jobs={jobs} loading={jobsLoading} onOpenJob={openJob} />
       )
