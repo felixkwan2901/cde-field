@@ -1,10 +1,13 @@
-import { ChevronRight, History, MapPin, MessageSquare, Phone, TriangleAlert, Wrench } from 'lucide-react'
+import { useState } from 'react'
+import { ChevronDown, ChevronRight, History, MapPin, MessageSquare, Phone, TriangleAlert, Wrench } from 'lucide-react'
 import { arrivalTime, isOnSite, presence } from '../lib/presence'
 import ProgressRing from '../components/ProgressRing'
 import ProgressBar from '../components/ProgressBar'
 import TaskStatus from '../components/TaskStatus'
 import EmptyState from '../components/EmptyState'
 import { groupShares, jobProgress, progressCaption } from '../lib/progress'
+import { readCollapsed, writeCollapsed } from '../lib/collapsed'
+import { taskState } from '../lib/taskState'
 import { relativeTime } from '../lib/format'
 
 export default function JobTasksScreen({
@@ -32,6 +35,20 @@ export default function JobTasksScreen({
   // Computed together rather than per area, because making them add to
   // exactly 100 needs to see all of them at once.
   const shares = groupShares([...areas.values()])
+
+  // Read once per mount rather than on every render, and keyed by the job so
+  // navigating between two jobs does not carry one's folds onto the other.
+  const [collapsed, setCollapsed] = useState(() => readCollapsed(job.jobNumber))
+
+  function toggleArea(area) {
+    setCollapsed((prev) => {
+      const next = new Set(prev)
+      if (next.has(area)) next.delete(area)
+      else next.add(area)
+      writeCollapsed(job.jobNumber, next)
+      return next
+    })
+  }
 
   return (
     <>
@@ -160,7 +177,10 @@ export default function JobTasksScreen({
         // and fourteen gaps of dead space to scroll past; grouping them
         // makes the area the object on screen and the tasks its contents,
         // which is also what the heading has been claiming all along.
-        [...areas].map(([area, tasks], areaIndex) => (
+        [...areas].map(([area, tasks], areaIndex) => {
+          const isCollapsed = collapsed.has(area)
+          const done = tasks.filter((t) => taskState(t) === 'done').length
+          return (
           <section key={area} className="mb-6">
             {/* The area's share of the whole job, and across the areas these
                 add to exactly 100%. Every counted task is worth the same
@@ -169,13 +189,31 @@ export default function JobTasksScreen({
                 the heading rather than on every row because on a row it
                 would be the same number fifteen times, and because this is
                 the line that already says "here is a section of the job". */}
-            <p className="list-label flex items-baseline justify-between gap-2">
-              <span>{area}</span>
-              {shares[areaIndex] != null && (
-                <span className="font-normal tabular-nums">{shares[areaIndex]}% of job</span>
-              )}
-            </p>
-            <ul className="list-group">
+            {/* The heading is the fold control. An area arrives open —
+                folding is something you choose, never the default — and a
+                folded one still says how many tasks it holds and how many
+                are done, so what is hidden is the rows and never the work.
+                */}
+            <button
+              onClick={() => toggleArea(area)}
+              aria-expanded={!isCollapsed}
+              aria-controls={`area-${areaIndex}`}
+              className="tap list-label flex w-full items-center gap-2 text-left"
+            >
+              <ChevronDown
+                size={16}
+                aria-hidden="true"
+                className="shrink-0 transition-transform"
+                style={{ transform: isCollapsed ? 'rotate(-90deg)' : 'none' }}
+              />
+              <span className="min-w-0 flex-1 truncate">{area}</span>
+              <span className="shrink-0 font-normal tabular-nums">
+                {isCollapsed && `${done} of ${tasks.length} done · `}
+                {shares[areaIndex] != null && `${shares[areaIndex]}% of job`}
+              </span>
+            </button>
+            {!isCollapsed && (
+            <ul className="list-group" id={`area-${areaIndex}`}>
               {tasks.map((task) => {
                 const partial =
                   !task.na && typeof task.pct === 'number' && task.pct > 0 && task.pct < 100
@@ -226,8 +264,10 @@ export default function JobTasksScreen({
                 )
               })}
             </ul>
+            )}
           </section>
-        ))
+          )
+        })
       )}
     </>
   )
