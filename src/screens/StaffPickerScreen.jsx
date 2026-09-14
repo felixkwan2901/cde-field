@@ -1,4 +1,3 @@
-import { initials } from '../lib/format'
 import EmptyState, { SkeletonRows } from '../components/EmptyState'
 import { Users } from 'lucide-react'
 
@@ -31,18 +30,17 @@ export default function StaffPickerScreen({ staff, loading, role, onPick }) {
           body="Add people in the dashboard and they'll appear here."
         />
       ) : (
-        // Eighteen names as eighteen separate cards is eighteen shadows and
-        // seventeen gaps — about a screen and a half of nothing to scroll
-        // through before you reach the Ss. One grouped list is how a phone
-        // shows a list of people, and it fits far more of them at once.
-        <ul className="list-group">
+        // Short names in full-width rows waste two thirds of every row on
+        // whitespace and pay for it in scroll. Two columns fits all eighteen
+        // on one screen. The initials chip is gone with them: fifteen of the
+        // eighteen are single names, so it only repeated the letter sitting
+        // beside it — and four consecutive "J" circles slowed the scan down
+        // rather than speeding it up.
+        <ul className="name-grid">
           {staff.map((person) => (
             <li key={person.id}>
-              <button onClick={() => onPick(person)} className="list-row">
-                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-surface-2 text-xs font-medium">
-                  {initials(person.name)}
-                </span>
-                <span className="text-md">{person.name}</span>
+              <button onClick={() => onPick(person)} className="name-tile">
+                {person.name}
               </button>
             </li>
           ))}

@@ -670,3 +670,45 @@ body {
     break-inside: avoid;
   }
 }
+
+/* ---------- name grid ---------- */
+
+/* Eighteen names as eighteen full-width rows is a screen and a half of
+   scrolling to find yourself. The names are short — the longest is
+   "Ben Ruffles" — so a single column wastes two thirds of every row on
+   whitespace and pays for it in scroll. Two columns puts the whole crew
+   on one screen with no scrolling at all, which is the only thing this
+   screen is for. Tiles stay above the 56px minimum: a gloved thumb has
+   to hit them. */
+.name-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-2);
+}
+
+.name-tile {
+  display: flex;
+  min-height: 60px;
+  width: 100%;
+  align-items: center;
+  padding: var(--space-2) var(--space-3);
+  text-align: left;
+  font-size: var(--text-md);
+  background: var(--surface-1);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+  transition: background var(--motion) ease, transform var(--motion) ease;
+}
+
+/* A tile is small enough that shrinking it reads as a press rather than
+   leaving a gap, which is why this differs from .list-row:active. */
+.name-tile:active {
+  background: var(--surface-2);
+  transform: scale(0.97);
+}
+
+@media (hover: hover) {
+  .name-tile:hover {
+    background: var(--surface-2);
+  }
+}
