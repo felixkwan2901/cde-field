@@ -26,7 +26,7 @@
 // Bindings: ASSETS (the built app), APP_DATA (KV).
 
 // Reads. Mirrors the allowlist in src/lib/workerClient.js.
-const READABLE = /^field:[A-Za-z0-9]{1,20}$|^fieldTasks:(commercial|residential)$|^planning:staff-roster$/
+const READABLE = /^field:[A-Za-z0-9]{1,20}$|^fieldTasks:(commercial|residential)$|^planning:(staff-roster|field-jobs)$/
 
 // Writes. Narrower on purpose: the app only ever writes progress records, and
 // the roster and task templates are the dashboard's to own. A bug here that

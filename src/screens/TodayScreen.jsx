@@ -56,9 +56,11 @@ export default function TodayScreen({ jobs, loading, onOpenJob }) {
                     {/* Two lines rather than a truncation: every job here is
                         a street and a suburb, and the suburb is how you tell
                         them apart — it is the half that was being cut. */}
-                    <p className="line-clamp-2 text-xs leading-snug text-ink-2">
-                      {job.site.address}
-                    </p>
+                    {job.site?.address && (
+                      <p className="line-clamp-2 text-xs leading-snug text-ink-2">
+                        {job.site.address}
+                      </p>
+                    )}
                     {/* Wraps rather than truncating, for the same reason as
                         the address: it was cutting the name off the person
                         who last touched the job — "Tom Pric…" — which is the

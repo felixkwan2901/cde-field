@@ -27,7 +27,7 @@ const DATA_PATH = '/app-data'
 
 // Mirrors the Worker's own allowlist. Checked here too so a typo fails as an
 // obvious error in development rather than a 400 nobody reads.
-const ALLOWED = /^field:[A-Za-z0-9]{1,20}$|^fieldTasks:(commercial|residential)$|^planning:staff-roster$/
+const ALLOWED = /^field:[A-Za-z0-9]{1,20}$|^fieldTasks:(commercial|residential)$|^planning:(staff-roster|field-jobs)$/
 
 export async function readKey(key) {
   if (!ALLOWED.test(key)) throw new Error(`Refusing to read an unexpected key: ${key}`)

@@ -1,5 +1,5 @@
-import { JOBS } from '../mocks/jobs'
 import { STAFF } from '../mocks/staff'
+import { buildJobs } from './buildJobs'
 import { readKey, writeKey } from './workerClient'
 
 // THE SEAM. This is the only module allowed to import from ../mocks.
@@ -9,8 +9,15 @@ import { readKey, writeKey } from './workerClient'
 // bodies. The pattern to never introduce is `if (USE_MOCKS)` inside a
 // component — that is how a prototype becomes unshippable.
 //
-// Today: the staff list and every progress write are real; the jobs are
-// fixtures.
+// Everything is real now. The jobs come from planning:field-jobs, published
+// out of the workbook by scripts/publish-field-jobs.mjs in the dashboard
+// repo; the checklists come from fieldTasks:<type>; the staff list and every
+// progress write were already real.
+//
+// The fixtures are gone rather than kept as a fallback. A fallback here would
+// mean an electrician on a bad connection quietly getting four invented jobs
+// that look exactly like real ones, and recording progress against numbers
+// that do not exist. An empty list with an error is the better failure.
 
 // A deliberate delay on the mocked reads, so the loading and skeleton states
 // are exercised on every use rather than being untested code that appears
@@ -30,25 +37,55 @@ export async function listStaff() {
   return settle(STAFF)
 }
 
-export async function listJobsForStaff(staffId) {
-  const mine = JOBS.filter((job) => job.assignedStaffIds.includes(staffId))
-  // Someone redirected mid-morning is a real case, so an unassigned person
-  // sees everything rather than an empty screen they cannot get past.
-  const jobs = mine.length ? mine : JOBS
-  return withProgress(await settle(jobs))
+// The published list plus the two checklists, fetched together because a job
+// without its template is a job with no tasks.
+//
+// Memoised for the life of the page: this is three reads, the answer changes
+// when the office publishes rather than while somebody is on a ladder, and
+// paying for it on every tab switch is a cost the phone notices.
+let jobsPromise = null
+
+async function loadJobs() {
+  if (!jobsPromise) {
+    jobsPromise = (async () => {
+      const [list, commercial, residential] = await Promise.all([
+        readKey('planning:field-jobs'),
+        readKey('fieldTasks:commercial'),
+        readKey('fieldTasks:residential'),
+      ])
+      return buildJobs(list, { commercial, residential })
+    })().catch((err) => {
+      // Not cached, so the next attempt tries again rather than being stuck
+      // with a failure from the moment the van drove under a bridge.
+      jobsPromise = null
+      throw err
+    })
+  }
+  return jobsPromise
 }
 
-// Every job, for the manager view. Same merge as the worker's list; the
-// difference is only that nothing is filtered by who is assigned.
+// Nothing in the office records which electrician is on which job — the
+// workbook has no such column and job-owners is the project owner, not the
+// crew. So everyone sees every job.
+//
+// That was already the behaviour for anyone unassigned, and it is the safe
+// direction to be wrong in: a missing job is someone unable to record work
+// they did, while an extra job is a name they scroll past.
+export async function listJobsForStaff() {
+  return withProgress(await loadJobs())
+}
+
+// Every job, for the manager view. Identical for now, and kept separate
+// because the day assignments exist the two stop being the same.
 export async function listAllJobs() {
-  return withProgress(await settle(JOBS))
+  return withProgress(await loadJobs())
 }
 
 export async function getJob(jobId) {
-  const job = JOBS.find((j) => j.id === jobId)
+  const jobs = await loadJobs()
+  const job = jobs.find((j) => j.id === jobId)
   if (!job) return null
-  const merged = await mergeRecordedProgress(job)
-  return settle(merged, 200)
+  return mergeRecordedProgress(job)
 }
 
 // Recorded progress lives in KV keyed by job; the task list and its labels
@@ -205,7 +242,8 @@ export async function recordVisit({ jobNumber, action, by, at = new Date().toISO
 // rectangle on the screen. Stored in memory only — it does not survive a
 // reload, and the button says so.
 export async function addAttachment(jobId, taskId, attachment) {
-  const job = JOBS.find((j) => j.id === jobId)
+  const jobs = await loadJobs()
+  const job = jobs.find((j) => j.id === jobId)
   const task = job?.tasks.find((t) => t.id === taskId)
   if (!task) return null
   task.attachments = [...task.attachments, { id: `att-${Date.now()}`, ...attachment }]
