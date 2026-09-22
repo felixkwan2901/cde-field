@@ -1,6 +1,17 @@
-import { Moon, Sun, LogOut, HardHat, ClipboardList, Info } from 'lucide-react'
+import { Moon, Sun, LogOut, HardHat, ClipboardList, Info, LayoutDashboard, ExternalLink } from 'lucide-react'
 import InstallPrompt from '../components/InstallPrompt'
 import { initials } from '../lib/format'
+
+// Where the office dashboard lives. The two apps are separate builds on
+// separate URLs, so getting back is a real link rather than a route — and
+// until now there wasn't one, which left anyone who opened this app from a
+// QR code or a home-screen icon with no way across.
+//
+// Build-time switch for the same reason workerClient uses one: the dashboard
+// is mid-move to a login-gated copy, and a build that forgets the variable
+// should land on the address that works today rather than nowhere.
+const DASHBOARD_URL =
+  import.meta.env.VITE_DASHBOARD_URL ?? 'https://www.kwanfelix.me/excel-dashboard/'
 
 // Every app has this tab, and it exists for a reason that is not tidiness:
 // it is where the things that used to clutter the header go. The theme
@@ -25,6 +36,27 @@ export default function MeScreen({ staff, role, theme, onToggleTheme, onSwitchSt
       </div>
 
       <InstallPrompt />
+
+      <p className="list-label">Office</p>
+      <div className="list-group mb-6">
+        {/* New tab, deliberately. This app holds unsent taps in an outbox, and
+            replacing the page is the one way to walk away from them. */}
+        <a
+          href={DASHBOARD_URL}
+          target="_blank"
+          rel="noreferrer"
+          className="list-row text-ink no-underline"
+        >
+          <LayoutDashboard size={20} aria-hidden="true" />
+          <span className="min-w-0 flex-1">
+            <span className="block text-sm font-medium">Open the dashboard</span>
+            <span className="block text-xs text-ink-2">
+              Weekly claims, job costs and the checklists
+            </span>
+          </span>
+          <ExternalLink size={16} aria-hidden="true" className="shrink-0 text-ink-2" />
+        </a>
+      </div>
 
       <p className="list-label">Settings</p>
       <div className="list-group mb-6">
