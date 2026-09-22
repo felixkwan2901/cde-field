@@ -1,0 +1,23 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "cd-field",
+  "main": "site-worker/index.js",
+  "compatibility_date": "2026-09-22",
+
+  // No run_worker_first here, unlike the dashboard. There is no login to
+  // enforce, so static files are better served straight from the edge — and
+  // the service worker that makes this usable on a bad site connection needs
+  // them to be. /api/app-data is not a file, so the Worker still sees it.
+  "assets": {
+    "directory": "./dist",
+    "binding": "ASSETS"
+  },
+
+  // The same namespace the dashboard and the upload Worker use. One store, so
+  // a percentage tapped on a phone is the record the office reads.
+  "kv_namespaces": [
+    { "binding": "APP_DATA", "id": "1bed6e14dbf047ac8616ae21ed09a9f6" }
+  ],
+
+  "observability": { "enabled": true }
+}
