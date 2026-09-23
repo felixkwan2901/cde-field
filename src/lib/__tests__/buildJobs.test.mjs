@@ -127,3 +127,35 @@ test('a missing or odd category is an empty string, not undefined', () => {
   }
   assert.equal(buildJob({ jobNumber: '1', category: '  Solar  ' }, TEMPLATES).category, 'Solar')
 })
+
+// The crew can add hazards on site, and those carry a name and a time the
+// office's plain strings do not. One shape for both, so the screen never has
+// to ask which kind it is holding before it can render it.
+test('office hazards become objects, marked as the office', () => {
+  const job = buildJob(
+    { jobNumber: '1', jobName: 'X', hazards: ['Live board', 'Open trench'] },
+    TEMPLATES,
+  )
+  assert.deepEqual(job.hazards, [
+    { id: null, text: 'Live board', by: null, at: null, source: 'office' },
+    { id: null, text: 'Open trench', by: null, at: null, source: 'office' },
+  ])
+})
+
+// Only a hazard added on site can be removed on site, and the screen decides
+// that from `source` and `id`. An office hazard arriving with either set
+// would put a Remove button on something this screen cannot remove.
+test('an office hazard never arrives removable', () => {
+  const job = buildJob({ jobNumber: '1', jobName: 'X', hazards: ['Live board'] }, TEMPLATES)
+  assert.equal(job.hazards[0].source, 'office')
+  assert.equal(job.hazards[0].id, null)
+})
+
+test('a hazard already published as an object keeps its text', () => {
+  const job = buildJob(
+    { jobNumber: '1', jobName: 'X', hazards: [{ text: 'Asbestos in ceiling' }] },
+    TEMPLATES,
+  )
+  assert.equal(job.hazards[0].text, 'Asbestos in ceiling')
+  assert.equal(job.hazards[0].source, 'office')
+})

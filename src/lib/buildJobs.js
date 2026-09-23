@@ -71,7 +71,19 @@ export function buildJob(entry, templates = {}) {
     site: entry.site ?? {},
     dates: entry.dates ?? {},
     contacts: toList(entry.contacts),
-    hazards: toList(entry.hazards),
+    // Normalised to objects here rather than left as the strings the office
+    // publishes, because the crew can now add their own and those carry a
+    // name and a time. One shape, so the screen does not have to ask which
+    // kind of hazard it is holding before it can render it.
+    //
+    // `source` is what the screen shows attribution from and what decides
+    // whether a hazard can be removed on site: an office one is deleted
+    // where it was written, not by whoever happens to be standing there.
+    hazards: toList(entry.hazards).map((h) =>
+      typeof h === 'string'
+        ? { id: null, text: h, by: null, at: null, source: 'office' }
+        : { id: null, by: null, at: null, source: 'office', ...h },
+    ),
     notes: toList(entry.notes),
     visits: toList(entry.visits),
     history: toList(entry.history),

@@ -16,7 +16,7 @@ import JobHistoryScreen from './screens/JobHistoryScreen'
 import JobNotesScreen from './screens/JobNotesScreen'
 import MapScreen from './screens/MapScreen'
 import MeScreen from './screens/MeScreen'
-import { addJobNote, getJob, listAllJobs, listJobsForStaff, listStaff, recordVisit, setTaskPercent, addAttachment } from './lib/dataSource'
+import { addJobNote, addSiteHazard, getJob, listAllJobs, listJobsForStaff, listStaff, recordVisit, removeSiteHazard, setSiteField, setTaskPercent, addAttachment } from './lib/dataSource'
 import { readStaff, writeStaff } from './lib/identity'
 import { applyTheme, readTheme } from './lib/theme'
 import { enqueue, readQueue, startFlushing } from './lib/outbox'
@@ -330,6 +330,77 @@ export default function App() {
     }
   }
 
+  // The three writes that come from the Safety and The work screens.
+  //
+  // They share one send path because they differ only in which dataSource
+  // call they end in: optimistic render, then online-or-queue, then the
+  // badge says whether it landed. Writing that sequence out three times is
+  // how the third copy ends up missing the offline branch.
+  async function sendSiteOp(op, apply) {
+    setJobs((prev) => prev.map((j) => (j.id !== job.id ? j : apply(j))))
+    if (!navigator.onLine) {
+      setPending((await enqueue(op)).length)
+      setSync('offline')
+      return
+    }
+    setSync('saving')
+    markSaved()
+    try {
+      if (op.kind === 'hazard') await addSiteHazard(op)
+      else if (op.kind === 'hazardRemove') await removeSiteHazard(op)
+      else await setSiteField(op)
+      setSync('saved')
+      markSaved()
+    } catch {
+      setPending((await enqueue(op)).length)
+      setSync('offline')
+    }
+  }
+
+  // Where the switchboard is, what the supply is, how you sign in. One value
+  // each, last writer wins, and the screen prints who that was.
+  async function saveSiteField(field, value) {
+    const at = new Date().toISOString()
+    const op = { kind: 'siteField', jobNumber: job.jobNumber, field, value, by: staff.name, at }
+    const key =
+      field === 'induction'
+        ? 'inductionRequired'
+        : field === 'switchboard'
+          ? 'switchboardLocation'
+          : 'supply'
+    await sendSiteOp(op, (j) => ({
+      ...j,
+      [key]: value || null,
+      siteInfo: {
+        ...(j.siteInfo ?? {}),
+        ...(value ? { [field]: { value, by: staff.name, at } } : {}),
+      },
+    }))
+  }
+
+  // The id is made here, not in dataSource, so the row rendered optimistically
+  // and the row that gets stored carry the same one — otherwise Remove would
+  // not work until after a reload.
+  async function saveHazard(text) {
+    const at = new Date().toISOString()
+    // Falls back to the timestamp where randomUUID is missing, rather than
+    // Date.now(): `at` is already this moment, and calling the clock a second
+    // time inside a component is exactly what the purity rule is for. Two
+    // hazards typed in the same millisecond would collide, which no human
+    // does.
+    const id = crypto.randomUUID?.() ?? `hazard-${at}`
+    const op = { kind: 'hazard', jobNumber: job.jobNumber, id, text, by: staff.name, at }
+    await sendSiteOp(op, (j) => ({
+      ...j,
+      hazards: [...(j.hazards ?? []), { id, text, by: staff.name, at, source: 'site' }],
+    }))
+  }
+
+  async function removeHazard(id) {
+    const op = { kind: 'hazardRemove', jobNumber: job.jobNumber, id, at: new Date().toISOString() }
+    await sendSiteOp(op, (j) => ({ ...j, hazards: (j.hazards ?? []).filter((h) => h.id !== id) }))
+  }
+
   // Arriving at or leaving a site. Optimistic like everything else here —
   // the button flips on the tap, and the badge says whether it landed.
   //
@@ -456,7 +527,17 @@ export default function App() {
         />
       )
     }
-    if (view.name === 'info') return <JobInfoScreen job={job} section={view.section} />
+    if (view.name === 'info')
+      return (
+        <JobInfoScreen
+          job={job}
+          section={view.section}
+          onSetSiteField={saveSiteField}
+          onAddHazard={saveHazard}
+          onRemoveHazard={removeHazard}
+          saving={sync === 'saving'}
+        />
+      )
     if (view.name === 'history') return <JobHistoryScreen job={job} />
     if (view.name === 'notes')
       return <JobNotesScreen job={job} onAddNote={saveNote} saving={sync === 'saving'} />
