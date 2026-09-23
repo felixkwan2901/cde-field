@@ -1,6 +1,7 @@
 import { STAFF } from '../mocks/staff'
 import { buildJobs } from './buildJobs'
 import { readKey, writeKey } from './workerClient'
+import { JOB_DETAILS_KEY, applyJobDetails } from './jobDetails'
 
 // THE SEAM. This is the only module allowed to import from ../mocks.
 //
@@ -40,20 +41,26 @@ export async function listStaff() {
 // The published list plus the two checklists, fetched together because a job
 // without its template is a job with no tasks.
 //
-// Memoised for the life of the page: this is three reads, the answer changes
-// when the office publishes rather than while somebody is on a ladder, and
-// paying for it on every tab switch is a cost the phone notices.
+// Memoised for the life of the page: four reads, and paying for them on
+// every tab switch is a cost the phone notices. It does mean an edit made in
+// the office while somebody has the app open shows up when they next open it
+// rather than instantly — which is the same as every other thing here, and
+// the alternative is polling a phone on site data all day.
 let jobsPromise = null
 
 async function loadJobs() {
   if (!jobsPromise) {
     jobsPromise = (async () => {
-      const [list, commercial, residential] = await Promise.all([
+      const [list, details, commercial, residential] = await Promise.all([
         readKey('planning:field-jobs'),
+        // Read live rather than baked into the list above. A phone number
+        // typed at a desk is on site the next time the app opens, with no
+        // command for anyone to remember to run.
+        readKey(JOB_DETAILS_KEY).catch(() => null),
         readKey('fieldTasks:commercial'),
         readKey('fieldTasks:residential'),
       ])
-      return buildJobs(list, { commercial, residential })
+      return buildJobs(applyJobDetails(list, details), { commercial, residential })
     })().catch((err) => {
       // Not cached, so the next attempt tries again rather than being stuck
       // with a failure from the moment the van drove under a bridge.
