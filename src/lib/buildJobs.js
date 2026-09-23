@@ -58,7 +58,10 @@ function withOfficeChecklist(template, overrides) {
   // Appended after the template, in the order the office added them — same
   // ordering rule already used for hazards (office first, then site), so
   // the list reads as a continuation rather than an unexplained reshuffle.
-  const extraTasks = extra.map((t) => ({ id: t.id, label: t.label, area: null }))
+  // Given a real area rather than null: the task screen groups by area, and
+  // null grouped these under a blank heading instead of one that says what
+  // they are.
+  const extraTasks = extra.map((t) => ({ id: t.id, label: t.label, area: 'Added for this job' }))
 
   return [...templated, ...extraTasks]
 }
@@ -81,7 +84,9 @@ export function applySiteTaskOverrides(tasks, record) {
   const reworded = tasks.map((task) =>
     siteOverrides[task.id]?.label ? { ...task, name: siteOverrides[task.id].label } : task,
   )
-  const extraTasks = siteExtra.map((t) => blankTask({ id: t.id, label: t.label, area: null }))
+  const extraTasks = siteExtra.map((t) =>
+    blankTask({ id: t.id, label: t.label, area: 'Added for this job' }),
+  )
 
   return [...reworded, ...extraTasks]
 }

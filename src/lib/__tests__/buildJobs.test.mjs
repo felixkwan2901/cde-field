@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { buildJob, buildJobs } from '../buildJobs.js'
+import { buildJob, buildJobs, applySiteTaskOverrides } from '../buildJobs.js'
 
 const TEMPLATES = {
   commercial: [
@@ -158,4 +158,117 @@ test('a hazard already published as an object keeps its text', () => {
   )
   assert.equal(job.hazards[0].text, 'Asbestos in ceiling')
   assert.equal(job.hazards[0].source, 'office')
+})
+
+// Per-job checklist customization — the office half (buildJob) and the site
+// half (applySiteTaskOverrides), and the precedence between them.
+
+test('with no overrides, the template is unaffected', () => {
+  const job = buildJob({ jobNumber: '1', jobName: 'X', type: 'commercial' }, TEMPLATES, null)
+  assert.deepEqual(job.tasks.map((t) => t.name), ['Site set-up', 'Rough-in'])
+})
+
+test('an office override reworks one task and leaves the rest alone', () => {
+  const overrides = { overrides: { 'rough-in': 'Rough-in (basement level only)' }, extra: [] }
+  const job = buildJob({ jobNumber: '1', jobName: 'X', type: 'commercial' }, TEMPLATES, overrides)
+  assert.deepEqual(job.tasks.map((t) => t.name), ['Site set-up', 'Rough-in (basement level only)'])
+})
+
+test('an office extra task is appended after the template, in order added', () => {
+  const overrides = {
+    overrides: {},
+    extra: [
+      { id: 'office-1', label: 'Confirm supply authority sign-off' },
+      { id: 'office-2', label: 'Book crane for the day' },
+    ],
+  }
+  const job = buildJob({ jobNumber: '1', jobName: 'X', type: 'commercial' }, TEMPLATES, overrides)
+  assert.deepEqual(job.tasks.map((t) => t.id), ['site-set-up', 'rough-in', 'office-1', 'office-2'])
+  assert.deepEqual(job.tasks.slice(2).map((t) => t.name), [
+    'Confirm supply authority sign-off',
+    'Book crane for the day',
+  ])
+})
+
+// A blank task's shape matters as much as its content — the screens iterate
+// attachments/pct/na without checking first, per buildJobs.js's own comment.
+// An extra task skipping blankTask() would crash the first screen that reads it.
+test('an office extra task has the same blank shape as a template task', () => {
+  const overrides = { overrides: {}, extra: [{ id: 'office-1', label: 'Extra step' }] }
+  const job = buildJob({ jobNumber: '1', jobName: 'X', type: 'commercial' }, TEMPLATES, overrides)
+  const extra = job.tasks.find((t) => t.id === 'office-1')
+  assert.deepEqual(extra, {
+    id: 'office-1',
+    name: 'Extra step',
+    area: 'Added for this job',
+    pct: null,
+    na: false,
+    updatedBy: null,
+    updatedAt: null,
+    attachments: [],
+  })
+})
+
+test('buildJobs threads each job its own overrides by job number', () => {
+  const overridesByJob = { 1: { overrides: { 'rough-in': 'Reworded for job 1' }, extra: [] } }
+  const [job1, job2] = buildJobs(
+    [
+      { jobNumber: '1', jobName: 'A', type: 'commercial' },
+      { jobNumber: '2', jobName: 'B', type: 'commercial' },
+    ],
+    TEMPLATES,
+    overridesByJob,
+  )
+  assert.equal(job1.tasks.find((t) => t.id === 'rough-in').name, 'Reworded for job 1')
+  assert.equal(job2.tasks.find((t) => t.id === 'rough-in').name, 'Rough-in')
+})
+
+test('applySiteTaskOverrides: no record leaves the tasks untouched', () => {
+  const job = buildJob({ jobNumber: '1', jobName: 'X', type: 'commercial' }, TEMPLATES, null)
+  assert.deepEqual(applySiteTaskOverrides(job.tasks, null), job.tasks)
+})
+
+test('applySiteTaskOverrides: a site override wins over the office one', () => {
+  const officeOverrides = { overrides: { 'rough-in': 'Office wording' }, extra: [] }
+  const job = buildJob({ jobNumber: '1', jobName: 'X', type: 'commercial' }, TEMPLATES, officeOverrides)
+  const record = { taskOverrides: { 'rough-in': { label: 'Site wording', by: 'Andy' } } }
+  const merged = applySiteTaskOverrides(job.tasks, record)
+  assert.equal(merged.find((t) => t.id === 'rough-in').name, 'Site wording')
+  // The office's own override on a DIFFERENT task is untouched by a site
+  // edit on this one — this is the case that would silently regress if the
+  // merge ever stopped being per-task.
+  assert.equal(merged.find((t) => t.id === 'site-set-up').name, 'Site set-up')
+})
+
+test('applySiteTaskOverrides: a site extra task is appended after office extras', () => {
+  const officeOverrides = { overrides: {}, extra: [{ id: 'office-1', label: 'Office step' }] }
+  const job = buildJob({ jobNumber: '1', jobName: 'X', type: 'commercial' }, TEMPLATES, officeOverrides)
+  const record = { extraTasks: [{ id: 'extra-1', label: 'Site step' }] }
+  const merged = applySiteTaskOverrides(job.tasks, record)
+  assert.deepEqual(merged.map((t) => t.id), ['site-set-up', 'rough-in', 'office-1', 'extra-1'])
+})
+
+test('a site-added extra task gets the same blank shape as any other task', () => {
+  const job = buildJob({ jobNumber: '1', jobName: 'X', type: 'commercial' }, TEMPLATES, null)
+  const record = { extraTasks: [{ id: 'extra-1', label: 'Site step' }] }
+  const merged = applySiteTaskOverrides(job.tasks, record)
+  const extra = merged.find((t) => t.id === 'extra-1')
+  assert.deepEqual(extra, {
+    id: 'extra-1',
+    name: 'Site step',
+    area: 'Added for this job',
+    pct: null,
+    na: false,
+    updatedBy: null,
+    updatedAt: null,
+    attachments: [],
+  })
+})
+
+test('office and site extras on the same job coexist without colliding ids', () => {
+  const officeOverrides = { overrides: {}, extra: [{ id: 'office-1', label: 'Office step' }] }
+  const job = buildJob({ jobNumber: '1', jobName: 'X', type: 'commercial' }, TEMPLATES, officeOverrides)
+  const record = { extraTasks: [{ id: 'extra-1', label: 'Site step' }] }
+  const merged = applySiteTaskOverrides(job.tasks, record)
+  assert.equal(new Set(merged.map((t) => t.id)).size, merged.length)
 })

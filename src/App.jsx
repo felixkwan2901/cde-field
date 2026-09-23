@@ -16,7 +16,7 @@ import JobHistoryScreen from './screens/JobHistoryScreen'
 import JobNotesScreen from './screens/JobNotesScreen'
 import MapScreen from './screens/MapScreen'
 import MeScreen from './screens/MeScreen'
-import { addJobNote, addSiteHazard, getJob, listAllJobs, listFieldAdmins, listJobsForStaff, listStaff, recordVisit, removeSiteHazard, setSiteField, setTaskPercent, addAttachment } from './lib/dataSource'
+import { addExtraTask, addJobNote, addSiteHazard, getJob, listAllJobs, listFieldAdmins, listJobsForStaff, listStaff, recordVisit, removeExtraTask, removeSiteHazard, setSiteField, setTaskLabelOverride, setTaskPercent, addAttachment } from './lib/dataSource'
 import { readStaff, writeStaff } from './lib/identity'
 import { applyTheme, readTheme } from './lib/theme'
 import { enqueue, readQueue, startFlushing } from './lib/outbox'
@@ -377,6 +377,9 @@ export default function App() {
     try {
       if (op.kind === 'hazard') await addSiteHazard(op)
       else if (op.kind === 'hazardRemove') await removeSiteHazard(op)
+      else if (op.kind === 'taskLabel') await setTaskLabelOverride(op)
+      else if (op.kind === 'extraTask') await addExtraTask(op)
+      else if (op.kind === 'extraTaskRemove') await removeExtraTask(op)
       else await setSiteField(op)
       setSync('saved')
       markSaved()
@@ -428,6 +431,60 @@ export default function App() {
   async function removeHazard(id) {
     const op = { kind: 'hazardRemove', jobNumber: job.jobNumber, id, at: new Date().toISOString() }
     await sendSiteOp(op, (j) => ({ ...j, hazards: (j.hazards ?? []).filter((h) => h.id !== id) }))
+  }
+
+  // Reword one task, for this job only. Clearing it (an empty label) falls
+  // back to whatever the office set or the template's own wording — a value
+  // this screen does not have on hand without re-fetching, unlike every
+  // other optimistic update here, so that one case waits for a fresh read
+  // rather than guessing.
+  async function saveTaskLabel(taskId, label) {
+    const at = new Date().toISOString()
+    const text = label.trim()
+    const op = { kind: 'taskLabel', jobNumber: job.jobNumber, taskId, label: text, by: staff.name, at }
+    await sendSiteOp(op, (j) => ({
+      ...j,
+      tasks: j.tasks.map((t) => (t.id !== taskId ? t : { ...t, name: text || t.name })),
+    }))
+    if (!text) setReloadKey((n) => n + 1)
+  }
+
+  // A task specific to this job, added on site. Blank task shape, same as
+  // buildJobs.js's blankTask — everything downstream reads through these
+  // fields without checking first.
+  async function addTaskOnSite(text) {
+    const at = new Date().toISOString()
+    // Always prefixed, not just on the fallback path: JobTasksScreen and the
+    // task screen tell a site-added task apart from an office-added one by
+    // this prefix alone (there is no separate `source` field on a task, the
+    // way there is on a hazard), so a plain crypto.randomUUID() here would
+    // make the resulting task silently unremovable.
+    const id = `extra-${crypto.randomUUID?.() ?? at}`
+    const op = { kind: 'extraTask', jobNumber: job.jobNumber, id, label: text, by: staff.name, at }
+    await sendSiteOp(op, (j) => ({
+      ...j,
+      tasks: [
+        ...j.tasks,
+        {
+          id,
+          name: text,
+          area: 'Added for this job',
+          pct: null,
+          na: false,
+          updatedBy: null,
+          updatedAt: null,
+          attachments: [],
+        },
+      ],
+    }))
+  }
+
+  // Only a task added on site can be removed here — the office-added ones
+  // are deleted where they were written, the same rule already applied to
+  // hazards.
+  async function removeTaskOnSite(id) {
+    const op = { kind: 'extraTaskRemove', jobNumber: job.jobNumber, id, at: new Date().toISOString() }
+    await sendSiteOp(op, (j) => ({ ...j, tasks: j.tasks.filter((t) => t.id !== id) }))
   }
 
   // Arriving at or leaving a site. Optimistic like everything else here —
@@ -562,6 +619,8 @@ export default function App() {
           onOpenInfo={(section) => navTo({ name: 'info', jobId: job.id, section })}
           onOpenHistory={() => navTo({ name: 'history', jobId: job.id })}
           onOpenNotes={() => navTo({ name: 'notes', jobId: job.id })}
+          onAddTask={addTaskOnSite}
+          saving={sync === 'saving'}
         />
       )
     }
@@ -592,6 +651,9 @@ export default function App() {
           history={(job.history ?? []).filter((e) => e.t === task.id)}
           onAttachPhoto={attachPhoto}
           onOpenNotes={() => navTo({ name: 'notes', jobId: job.id })}
+          onSetLabel={(label) => saveTaskLabel(task.id, label)}
+          onRemoveTask={task.id.startsWith('extra-') ? () => { removeTaskOnSite(task.id); navTo({ name: 'job', jobId: job.id }) } : null}
+          saving={sync === 'saving'}
         />
       )
     }

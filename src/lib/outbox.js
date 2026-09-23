@@ -1,5 +1,5 @@
 import { get, set } from 'idb-keyval'
-import { addJobNote, addSiteHazard, recordVisit, removeSiteHazard, setSiteField, setTaskPercent } from './dataSource'
+import { addExtraTask, addJobNote, addSiteHazard, recordVisit, removeExtraTask, removeSiteHazard, setSiteField, setTaskLabelOverride, setTaskPercent } from './dataSource'
 
 // Progress recorded with no signal, held until there is some.
 //
@@ -48,9 +48,17 @@ export async function enqueue(op) {
   // other out. Collapsing them properly (same job, same field) is possible
   // and not worth it: nobody edits the switchboard location twice in one
   // offline stretch, and replaying both in order lands on the same answer.
+  // taskLabel joins this list for a sharper reason than the others: it
+  // carries the same `taskId` a percentage op does, and the rule below
+  // collapses same-job-same-taskId ops assuming they're all percentages —
+  // without this, rewording a task would silently swallow a queued
+  // percentage change on that same task. extraTask/extraTaskRemove carry no
+  // taskId at all (an id, not a taskId), which risks the same accidental
+  // collapse siteField's own comment already describes for itself.
   const isAppend = (o) =>
     o.kind === 'note' || o.kind === 'visit' || o.kind === 'hazard' ||
-    o.kind === 'hazardRemove' || o.kind === 'siteField'
+    o.kind === 'hazardRemove' || o.kind === 'siteField' || o.kind === 'taskLabel' ||
+    o.kind === 'extraTask' || o.kind === 'extraTaskRemove'
   const withoutTask = isAppend(op)
     ? queue
     : queue.filter(
@@ -73,6 +81,9 @@ const SENDERS = {
   hazard: addSiteHazard,
   hazardRemove: removeSiteHazard,
   siteField: setSiteField,
+  taskLabel: setTaskLabelOverride,
+  extraTask: addExtraTask,
+  extraTaskRemove: removeExtraTask,
 }
 
 export async function flush() {

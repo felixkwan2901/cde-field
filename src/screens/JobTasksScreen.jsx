@@ -31,6 +31,8 @@ export default function JobTasksScreen({
   onOpenInfo,
   onOpenHistory,
   onOpenNotes,
+  onAddTask,
+  saving,
 }) {
   const progress = jobProgress(job.tasks)
   const { onSite, last, everVisited } = presence(job.visits)
@@ -216,7 +218,9 @@ export default function JobTasksScreen({
           title="Not broken down yet"
           body="Nobody has set the task list for this job. It'll appear here once they do."
         />
-      ) : (
+      ) : null}
+
+      {job.tasks.length > 0 && (
         // One card per area with hairline-divided rows, rather than a
         // separate card per task. Fifteen floating cards is fifteen shadows
         // and fourteen gaps of dead space to scroll past; grouping them
@@ -314,7 +318,52 @@ export default function JobTasksScreen({
           )
         })
       )}
+
+      {/* Adding a step is offered whether or not the office has already set
+          the task list — a job with nothing broken down yet can still get a
+          job-specific one written on the spot, which is a real answer to
+          "not broken down yet" rather than a dead end waiting for the
+          office. Same shape as the hazard form on the Safety screen. */}
+      {onAddTask && <AddExtraTask saving={saving} onAdd={onAddTask} />}
     </>
+  )
+}
+
+function AddExtraTask({ saving, onAdd }) {
+  const [text, setText] = useState('')
+  const ready = text.trim().length > 0
+
+  function submit(event) {
+    event.preventDefault()
+    if (!ready) return
+    onAdd(text.trim())
+    setText('')
+  }
+
+  return (
+    <form onSubmit={submit} className="card mt-2 px-4 py-3">
+      <label htmlFor="add-task" className="block text-xs text-ink-2">
+        Add a step for this job
+      </label>
+      <div className="mt-1 flex items-center gap-2">
+        <input
+          id="add-task"
+          type="text"
+          value={text}
+          onChange={(e) => setText(e.target.value.slice(0, 140))}
+          placeholder="e.g. Confirm crane booking before rough-in"
+          enterKeyHint="done"
+          className="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-ink-2"
+        />
+        <button
+          type="submit"
+          disabled={!ready || saving}
+          className="tap pressable shrink-0 rounded-sm bg-accent px-3 text-sm font-medium text-accent-ink disabled:opacity-40"
+        >
+          Add
+        </button>
+      </div>
+    </form>
   )
 }
 

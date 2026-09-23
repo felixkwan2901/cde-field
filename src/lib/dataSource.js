@@ -1,5 +1,5 @@
 import { STAFF } from '../mocks/staff'
-import { buildJobs } from './buildJobs'
+import { buildJobs, applySiteTaskOverrides } from './buildJobs'
 import { readKey, writeKey } from './workerClient'
 import { JOB_DETAILS_KEY, applyJobDetails } from './jobDetails'
 
@@ -75,7 +75,7 @@ let jobsPromise = null
 async function loadJobs() {
   if (!jobsPromise) {
     jobsPromise = (async () => {
-      const [list, details, commercial, residential] = await Promise.all([
+      const [list, details, commercial, residential, checklistOverrides] = await Promise.all([
         readKey('planning:field-jobs'),
         // Read live rather than baked into the list above. A phone number
         // typed at a desk is on site the next time the app opens, with no
@@ -83,8 +83,11 @@ async function loadJobs() {
         readKey(JOB_DETAILS_KEY).catch(() => null),
         readKey('fieldTasks:commercial'),
         readKey('fieldTasks:residential'),
+        // Same live-read reasoning as job-details: a task reworded or added
+        // from the dashboard shows up here with no publish step.
+        readKey('planning:field-checklist-overrides').catch(() => null),
       ])
-      return buildJobs(applyJobDetails(list, details), { commercial, residential })
+      return buildJobs(applyJobDetails(list, details), { commercial, residential }, checklistOverrides ?? {})
     })().catch((err) => {
       // Not cached, so the next attempt tries again rather than being stuck
       // with a failure from the moment the van drove under a bridge.
@@ -168,9 +171,22 @@ async function mergeRecordedProgress(job) {
     // separate from the values so every existing reader of `supply` keeps
     // getting a plain string.
     siteInfo: record?.siteInfo ?? {},
-    tasks: job.tasks.map((task) => {
+    // Site checklist customization first (see applySiteTaskOverrides in
+    // buildJobs.js — it wins over the office's own wording on the same task,
+    // and appends any task the crew added), THEN the recorded percentages,
+    // because a site-added task can have progress recorded against it same
+    // as any other and that has to land on the row that now exists for it.
+    tasks: applySiteTaskOverrides(job.tasks, record).map((task) => {
       const saved = record?.tasks?.[task.id]
-      return saved ? { ...task, pct: saved.pct, na: !!saved.na, updatedBy: saved.by, updatedAt: saved.at } : task
+      if (!saved) return task
+      // Only pct/na/attribution fields, and only when the record actually
+      // says something about them — a task whose entry exists purely
+      // because of a photo attachment (see addAttachment) has no `pct` at
+      // all, and overwriting the correct default with `undefined` would be
+      // this function quietly erasing a percentage nobody touched.
+      return saved.pct === undefined
+        ? task
+        : { ...task, pct: saved.pct, na: !!saved.na, updatedBy: saved.by, updatedAt: saved.at }
     }),
   }
 }
@@ -351,6 +367,83 @@ export async function removeSiteHazard({ jobNumber, id, at = new Date().toISOStr
       ...(record?.siteInfo ?? {}),
       hazards: (record?.siteInfo?.hazards ?? []).filter((h) => h.id !== id),
     },
+  }
+  await writeKey(key, next)
+  return next
+}
+
+// Reword a task for this job only. An empty label clears the site override
+// and falls back to whatever the office set (or the template's own wording
+// if the office set nothing either) — clearing is how you go back, the same
+// rule setSiteField already follows for switchboard/supply/induction.
+export async function setTaskLabelOverride({ jobNumber, taskId, label, by, at = new Date().toISOString() }) {
+  const key = `field:${jobNumber}`
+  let record
+  try {
+    record = await readKey(key)
+  } catch {
+    record = null
+  }
+  const text = String(label ?? '').trim()
+  const taskOverrides = { ...(record?.taskOverrides ?? {}) }
+  if (text) taskOverrides[taskId] = { label: text, by, at }
+  else delete taskOverrides[taskId]
+
+  const next = {
+    v: 1,
+    jobNumber: String(jobNumber),
+    ...record,
+    updatedAt: at,
+    tasks: record?.tasks ?? {},
+    taskOverrides,
+  }
+  await writeKey(key, next)
+  return next
+}
+
+// A task added on site, specific to this job. `id` is made by the caller —
+// same reasoning as addSiteHazard — so an optimistic render and the stored
+// row carry the same one before the write round-trips.
+export async function addExtraTask({ jobNumber, id, label, by, at = new Date().toISOString() }) {
+  const key = `field:${jobNumber}`
+  let record
+  try {
+    record = await readKey(key)
+  } catch {
+    record = null
+  }
+  const next = {
+    v: 1,
+    jobNumber: String(jobNumber),
+    ...record,
+    updatedAt: at,
+    tasks: record?.tasks ?? {},
+    extraTasks: [...(record?.extraTasks ?? []), { id, label: String(label ?? '').trim(), by, at }],
+  }
+  await writeKey(key, next)
+  return next
+}
+
+// Only a task added on site can be removed here — the same rule already
+// applied to hazards. A task added from the dashboard is deleted where it
+// was written; an id that isn't in this job's own extraTasks list (because
+// it's a template task or an office-added one) is a no-op, not an error —
+// the caller only ever offers Remove next to a row it read from here.
+export async function removeExtraTask({ jobNumber, id, at = new Date().toISOString() }) {
+  const key = `field:${jobNumber}`
+  let record
+  try {
+    record = await readKey(key)
+  } catch {
+    record = null
+  }
+  const next = {
+    v: 1,
+    jobNumber: String(jobNumber),
+    ...record,
+    updatedAt: at,
+    tasks: record?.tasks ?? {},
+    extraTasks: (record?.extraTasks ?? []).filter((t) => t.id !== id),
   }
   await writeKey(key, next)
   return next

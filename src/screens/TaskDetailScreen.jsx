@@ -7,13 +7,61 @@ import { relativeTime } from '../lib/format'
 // The screen the demo lives or dies on. Top to bottom: what it is, what it
 // is at, how to change it, then the extras. The primary control sits in the
 // bottom two-thirds where a thumb reaches without shifting grip.
-export default function TaskDetailScreen({ task, position, total, history = [], onSetPercent, onToggleNa, onAttachPhoto, onOpenNotes }) {
+export default function TaskDetailScreen({ task, position, total, history = [], onSetPercent, onToggleNa, onAttachPhoto, onOpenNotes, onSetLabel, onRemoveTask, saving }) {
   return (
     <>
       <p className="text-xs text-ink-2">
         Task {position} of {total} · {task.area}
       </p>
       <h2 className="mt-1 text-lg font-medium leading-snug">{task.name}</h2>
+
+      {/* Collapsed by default — rewording a task is rare next to setting its
+          percentage, and a text box sitting open under every task's title
+          would compete with the thing people actually do here forty times a
+          day. Shows the CURRENT wording as its value, whichever layer it
+          came from (template, office, or an earlier site edit) — clearing it
+          entirely falls back to what the office set, or the template's own
+          default if the office set nothing either. */}
+      {onSetLabel && (
+        <details className="mt-1">
+          <summary className="cursor-pointer text-xs text-ink-2 underline decoration-dotted">
+            Reword for this job
+          </summary>
+          <input
+            type="text"
+            key={task.name}
+            defaultValue={task.name}
+            disabled={saving}
+            aria-label="Custom wording for this task, on this job only"
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') e.currentTarget.blur()
+              if (e.key === 'Escape') {
+                e.currentTarget.value = task.name
+                e.currentTarget.blur()
+              }
+            }}
+            onBlur={(e) => {
+              const next = e.target.value.trim()
+              if (next !== task.name) onSetLabel(next)
+            }}
+            className="tap mt-2 w-full rounded-sm border border-line bg-surface px-3 py-2 text-sm outline-none disabled:opacity-50"
+          />
+        </details>
+      )}
+
+      {/* Only offered on a task added on site — an office-added one is
+          removed from the dashboard, where it was written, the same rule
+          already applied to hazards. */}
+      {onRemoveTask && (
+        <button
+          type="button"
+          onClick={onRemoveTask}
+          disabled={saving}
+          className="tap mt-2 text-xs text-red-400 disabled:opacity-50"
+        >
+          Remove this task from the job
+        </button>
+      )}
 
       {/* A ring rather than a bare number. The screen needed one thing the eye
           lands on first — at arm's length in sun a figure floating in space
