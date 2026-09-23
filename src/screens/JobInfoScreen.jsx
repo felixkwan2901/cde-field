@@ -1,4 +1,5 @@
 import { Fragment, useState } from 'react'
+import JobMap from '../components/JobMap'
 // Read-only, ordered by what you need standing at a gate rather than by what
 // a database would list first: how to get in, who to ring, what the work is,
 // what will hurt you, when it's due.
@@ -187,6 +188,17 @@ export default function JobInfoScreen({
         title={section ? null : 'Getting in'}
         empty={noAccess ? 'No address or access details for this job yet.' : null}
       >
+        {/* A preview, not a replacement for the tap-through link below — this
+            answers "roughly where" without leaving the app; turn-by-turn
+            still needs the real Maps app. Guarded on lat existing rather than
+            on `noAccess` above, which is about the text fields: an address
+            that failed to geocode (see the Map tab's "Not on the map" list)
+            still gets its text rows here, just no preview.
+            `bleed` drops JobMap's own card/border so it sits flush as the
+            first thing in this Section's own rounded card, rather than a
+            card inside a card. No `onOpenJob` — there is nowhere to navigate
+            to, we are already on this job. */}
+        {typeof job.site?.lat === 'number' && <JobMap jobs={[job]} height={160} bleed />}
         {/* mapQuery is a tidied search string for the few sites whose postal
             address does not find the gate. Nothing sets it today, and without
             the fallback this linked to ?q=undefined — a live link that opens
