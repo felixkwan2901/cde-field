@@ -14,6 +14,11 @@ export default function MapScreen({ jobs, loading, onOpenJob }) {
   if (loading) return <SkeletonRows count={2} />
 
   const placeable = jobs.filter((j) => typeof j.site?.lat === 'number')
+  // Has an address but no pin — a lookup that failed rather than a job with
+  // nothing typed against it. Named on screen instead of just missing from
+  // the list below, because "why isn't this one here" is a worse question
+  // to leave unanswered than "no coordinates yet" is to state plainly.
+  const unplaced = jobs.filter((j) => j.site?.address && typeof j.site?.lat !== 'number')
   if (placeable.length === 0) {
     return (
       <EmptyState
@@ -54,6 +59,33 @@ export default function MapScreen({ jobs, loading, onOpenJob }) {
           </button>
         ))}
       </div>
+
+      {unplaced.length > 0 && (
+        <>
+          <p className="list-label mt-6">
+            {unplaced.length === 1 ? 'Not on the map' : `Not on the map (${unplaced.length})`}
+          </p>
+          <div className="list-group">
+            {unplaced.map((job) => (
+              <button key={job.id} className="list-row" onClick={() => onOpenJob(job.id)}>
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-surface-2">
+                  <MapPin size={17} aria-hidden="true" className="text-ink-2 opacity-40" />
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate text-sm font-medium">{job.jobName}</span>
+                  {/* The reason, not just the fact — an address that is here
+                      but could not be found is a different problem from no
+                      address at all, and needs a different fix (correcting
+                      the address, not typing one in). */}
+                  <span className="block truncate text-xs text-ink-2">
+                    {job.site.address} · could not be located
+                  </span>
+                </span>
+              </button>
+            ))}
+          </div>
+        </>
+      )}
     </>
   )
 }
