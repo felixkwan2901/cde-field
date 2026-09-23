@@ -1,5 +1,6 @@
 import { ChevronRight, ClipboardList, HardHat } from 'lucide-react'
 import Brand from '../components/Brand'
+import PickerBackdrop from '../components/PickerBackdrop'
 
 // The landing screen. Two questions get asked on this app and they are not
 // the same question: a sparky asks "what am I doing today", a manager asks
@@ -11,7 +12,8 @@ import Brand from '../components/Brand'
 // working screen and gets its width back.
 export default function RoleScreen({ onPick }) {
   return (
-    <div className="app-frame nav-fade">
+    <div className="app-frame nav-fade picker-scene">
+      <PickerBackdrop />
       {/* Centred in whatever height it is given, rather than pinned to the
           top of it. On a phone that is the same thing; on a laptop the old
           version left two thirds of the window empty below the content and

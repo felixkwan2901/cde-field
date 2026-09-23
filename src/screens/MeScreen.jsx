@@ -1,4 +1,4 @@
-import { Moon, Sun, LogOut, HardHat, ClipboardList, Info, LayoutDashboard, ExternalLink } from 'lucide-react'
+import { LogOut, HardHat, ClipboardList, Info, LayoutDashboard, ExternalLink } from 'lucide-react'
 import InstallPrompt from '../components/InstallPrompt'
 import { initials } from '../lib/format'
 
@@ -14,13 +14,13 @@ const DASHBOARD_URL =
   import.meta.env.VITE_DASHBOARD_URL ?? 'https://www.kwanfelix.me/excel-dashboard/'
 
 // Every app has this tab, and it exists for a reason that is not tidiness:
-// it is where the things that used to clutter the header go. The theme
-// toggle, the avatar that switches who you are, and the sync badge were
-// three controls competing with the title for a 390px bar. Two of them are
-// touched once a week. Moving them here gives the bar back to the one
-// thing it should carry, and gives these controls room to be labelled
-// rather than guessed at from an icon.
-export default function MeScreen({ staff, role, isAdmin, theme, onToggleTheme, onSwitchStaff, onSwitchRole }) {
+// it is where the things that used to clutter the header go — the avatar
+// that switches who you are, and the account/office links below. The theme
+// toggle moved back OUT of here and into the top bar (see App.jsx): it is
+// used mid-job, in a ceiling space or in the sun, and a control reached for
+// in that moment cannot cost a trip to a tab whose whole point is settings
+// visited rarely.
+export default function MeScreen({ staff, role, isAdmin, onSwitchStaff, onSwitchRole }) {
   return (
     <>
       <div className="card mb-6 flex items-center gap-2 p-4">
@@ -60,20 +60,6 @@ export default function MeScreen({ staff, role, isAdmin, theme, onToggleTheme, o
 
       <p className="list-label">Settings</p>
       <div className="list-group mb-6">
-        <button className="list-row" onClick={onToggleTheme}>
-          {theme === 'dark' ? <Sun size={20} aria-hidden="true" /> : <Moon size={20} aria-hidden="true" />}
-          <span className="min-w-0 flex-1">
-            <span className="block text-sm font-medium">
-              {theme === 'dark' ? 'Light mode' : 'Dark mode'}
-            </span>
-            <span className="block text-xs text-ink-2">
-              {theme === 'dark'
-                ? 'Easier to read outdoors'
-                : 'Easier on the eyes in a ceiling space'}
-            </span>
-          </span>
-        </button>
-
         {/* Switching TO managing is hidden entirely for someone not on the
             admin list, rather than shown and left to bounce them back — a
             visible control that doesn't work is worse than no control.

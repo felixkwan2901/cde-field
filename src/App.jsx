@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { Home, Map as MapIcon, User, Users, Briefcase, FileText, WifiOff } from 'lucide-react'
 import Screen from './components/Screen'
 import SyncBadge from './components/SyncBadge'
+import { Sun, Moon } from 'lucide-react'
 import UndoToast from './components/UndoToast'
 import EmptyState, { SkeletonRows } from './components/EmptyState'
 import RoleScreen from './screens/RoleScreen'
@@ -554,8 +555,6 @@ export default function App() {
           staff={staff}
           role={role}
           isAdmin={admins.has(String(staff.id))}
-          theme={theme}
-          onToggleTheme={toggleTheme}
           onSwitchStaff={signOut}
           onSwitchRole={switchRole}
         />
@@ -709,7 +708,22 @@ export default function App() {
         tabs={isRoot ? tabs : undefined}
         currentTab={view.name}
         onSelectTab={(key) => navTo({ name: key })}
-        actions={<SyncBadge status={sync} pending={pending} />}
+        actions={
+          <div className="flex items-center gap-1">
+            {/* Moved here from the Me screen — a control used mid-job, on
+                site or in a ceiling space, needs to be reachable from
+                wherever you already are, not two taps away behind a tab
+                whose whole point is settings you visit rarely. */}
+            <button
+              onClick={toggleTheme}
+              aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+              className="tap flex h-9 w-9 items-center justify-center rounded-full text-ink-2"
+            >
+              {theme === 'dark' ? <Sun size={18} aria-hidden="true" /> : <Moon size={18} aria-hidden="true" />}
+            </button>
+            <SyncBadge status={sync} pending={pending} />
+          </div>
+        }
       >
         {notice && (
           <div className="mb-2 rounded-xl bg-warn-bg px-4 py-2 text-xs text-warn">
