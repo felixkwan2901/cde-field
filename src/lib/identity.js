@@ -14,12 +14,14 @@ export function readStaff() {
   }
 }
 
-// Role is stored beside the name, not derived from it: there is no role data
-// anywhere in this system, and inventing one from a job title would be a
-// guess. Worth being blunt about what this is — with no authentication,
-// picking "managing" is choosing a VIEW, not being granted a permission.
-// Anyone can pick it and anyone can still post progress as anyone. The fix
-// for that is Cloudflare Access in front of the Worker, not a role picker.
+// Role is stored beside the name, not derived from it: nothing else in the
+// system says who someone is. Worth being blunt about what this still is
+// with no authentication: "managing" is checked against planning:field-admins
+// (see listFieldAdmins in dataSource.js), which decides which SCREENS render
+// — it does not decide what a phone can read or write. Anyone can still post
+// progress as anyone, and anyone with the URL can read the same data a
+// manager sees, admin list or not. The fix for that is Cloudflare Access in
+// front of the Worker, not a role picker.
 export function writeStaff(staff) {
   try {
     if (staff) localStorage.setItem(KEY, JSON.stringify(staff))

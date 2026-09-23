@@ -25,6 +25,30 @@ import { JOB_DETAILS_KEY, applyJobDetails } from './jobDetails'
 // for the first time on a bad connection.
 const settle = (value, ms = 300) => new Promise((resolve) => setTimeout(() => resolve(value), ms))
 
+// Who is allowed to pick "I'm managing" — see App.jsx's pickStaff and
+// switchRole for where this is enforced.
+//
+// UI GATE, NOT SECURITY. planning:field-jobs and planning:staff-roster are
+// readable by anyone with this app's URL regardless of role, same as before
+// this existed — this list only decides which SCREENS render, not what data
+// reaches a device. Real protection is Cloudflare Access in front of the
+// Worker, which this is not attempting to be.
+//
+// Deliberately does NOT fall back to a mock list on failure, unlike
+// listStaff() below. A roster that fails open (defaulting to "everyone can
+// see it") the moment the network drops would make the gate meaningless the
+// one time it might matter; a roster that fails closed just means nobody
+// reaches the manager view until the connection is back, which is the safe
+// direction to be wrong in.
+export async function listFieldAdmins() {
+  try {
+    const ids = await readKey('planning:field-admins')
+    return new Set(Array.isArray(ids) ? ids.map(String) : [])
+  } catch {
+    return new Set()
+  }
+}
+
 export async function listStaff() {
   try {
     const roster = await readKey('planning:staff-roster')

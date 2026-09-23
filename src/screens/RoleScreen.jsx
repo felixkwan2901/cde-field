@@ -45,10 +45,13 @@ export default function RoleScreen({ onPick }) {
           </div>
 
           {/* Said plainly rather than buried in a README nobody on site will
-              read. This is a view, not a permission. */}
+              read. Picking "on site" really is unrestricted. "Managing" is
+              checked against a short list the office keeps — not real
+              authentication (nothing here is), just enough that tapping the
+              wrong card doesn't quietly work. */}
           <p className="mt-6 text-xs leading-relaxed text-ink-2">
-            Prototype. There&apos;s no sign-in — picking a role or a name identifies you
-            to your workmates, it doesn&apos;t restrict anything.
+            Prototype. There&apos;s no sign-in. Picking a name identifies you to your
+            workmates. Managing is limited to people the office has set up for it.
           </p>
           <div className="safe-bottom" />
         </div>

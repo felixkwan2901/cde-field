@@ -16,7 +16,7 @@ import JobHistoryScreen from './screens/JobHistoryScreen'
 import JobNotesScreen from './screens/JobNotesScreen'
 import MapScreen from './screens/MapScreen'
 import MeScreen from './screens/MeScreen'
-import { addJobNote, addSiteHazard, getJob, listAllJobs, listJobsForStaff, listStaff, recordVisit, removeSiteHazard, setSiteField, setTaskPercent, addAttachment } from './lib/dataSource'
+import { addJobNote, addSiteHazard, getJob, listAllJobs, listFieldAdmins, listJobsForStaff, listStaff, recordVisit, removeSiteHazard, setSiteField, setTaskPercent, addAttachment } from './lib/dataSource'
 import { readStaff, writeStaff } from './lib/identity'
 import { applyTheme, readTheme } from './lib/theme'
 import { enqueue, readQueue, startFlushing } from './lib/outbox'
@@ -69,6 +69,10 @@ export default function App() {
   const [role, setRole] = useState(() => readStaff()?.role ?? null)
   const [roster, setRoster] = useState([])
   const [rosterLoading, setRosterLoading] = useState(true)
+  // Who is allowed to pick "I'm managing" — see pickStaff and switchRole.
+  // Starts empty, which is the fail-closed default: until this loads,
+  // nobody is treated as an admin rather than everybody.
+  const [admins, setAdmins] = useState(() => new Set())
   const [jobs, setJobs] = useState([])
   const [jobsLoading, setJobsLoading] = useState(true)
   // Bumped to ask for a re-read. An effect keyed on it beats calling a
@@ -108,6 +112,7 @@ export default function App() {
       setRoster(list)
       setRosterLoading(false)
     })
+    listFieldAdmins().then(setAdmins)
   }, [])
 
   useEffect(() => {
@@ -168,7 +173,18 @@ export default function App() {
   }
 
   function pickStaff(person) {
-    setStaff(writeStaff({ ...person, role }))
+    // Chosen "I'm managing" but not on the admin list — dropped into the
+    // worker view instead, with a reason. A silent redirect here would be
+    // the exact "why isn't this working" failure already fixed elsewhere in
+    // this app (the Map tab's "Not on the map" list): say what happened and
+    // what to do about it, rather than leaving someone to guess whether the
+    // tap didn't register.
+    const grantedRole = role === 'manager' && !admins.has(String(person.id)) ? 'worker' : role
+    if (grantedRole !== role) {
+      setRole(grantedRole)
+      setNotice("You're not set up as an admin yet — ask the office to add you.")
+    }
+    setStaff(writeStaff({ ...person, role: grantedRole }))
     viewNameRef.current = 'today'
     setView({ name: 'today' })
   }
@@ -242,6 +258,15 @@ export default function App() {
   // person asking a different question, and making them re-pick themselves
   // out of eighteen to do it would be a punishment for curiosity.
   function switchRole() {
+    // Switching TO manager is gated the same way pickStaff is; switching
+    // back to worker never needs to be, so this only checks the direction
+    // that matters. The Me screen already hides this control entirely for a
+    // non-admin (see MeScreen.jsx) — this is the backstop, not the only
+    // gate, in case anything ever calls switchRole from somewhere else.
+    if (role !== 'manager' && !admins.has(String(staff.id))) {
+      setNotice("You're not set up as an admin yet — ask the office to add you.")
+      return
+    }
     const next = role === 'manager' ? 'worker' : 'manager'
     setRole(next)
     setStaff(writeStaff({ ...staff, role: next }))
@@ -459,6 +484,7 @@ export default function App() {
         <MeScreen
           staff={staff}
           role={role}
+          isAdmin={admins.has(String(staff.id))}
           theme={theme}
           onToggleTheme={toggleTheme}
           onSwitchStaff={signOut}

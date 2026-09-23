@@ -20,7 +20,7 @@ const DASHBOARD_URL =
 // touched once a week. Moving them here gives the bar back to the one
 // thing it should carry, and gives these controls room to be labelled
 // rather than guessed at from an icon.
-export default function MeScreen({ staff, role, theme, onToggleTheme, onSwitchStaff, onSwitchRole }) {
+export default function MeScreen({ staff, role, isAdmin, theme, onToggleTheme, onSwitchStaff, onSwitchRole }) {
   return (
     <>
       <div className="card mb-6 flex items-center gap-2 p-4">
@@ -74,21 +74,28 @@ export default function MeScreen({ staff, role, theme, onToggleTheme, onSwitchSt
           </span>
         </button>
 
-        <button className="list-row" onClick={onSwitchRole}>
-          {role === 'manager' ? (
-            <HardHat size={20} aria-hidden="true" />
-          ) : (
-            <ClipboardList size={20} aria-hidden="true" />
-          )}
-          <span className="min-w-0 flex-1">
-            <span className="block text-sm font-medium">
-              Switch to {role === 'manager' ? 'on site' : 'managing'}
+        {/* Switching TO managing is hidden entirely for someone not on the
+            admin list, rather than shown and left to bounce them back — a
+            visible control that doesn't work is worse than no control.
+            Switching back to on-site is always available; that direction
+            needs no gate. */}
+        {(role === 'manager' || isAdmin) && (
+          <button className="list-row" onClick={onSwitchRole}>
+            {role === 'manager' ? (
+              <HardHat size={20} aria-hidden="true" />
+            ) : (
+              <ClipboardList size={20} aria-hidden="true" />
+            )}
+            <span className="min-w-0 flex-1">
+              <span className="block text-sm font-medium">
+                Switch to {role === 'manager' ? 'on site' : 'managing'}
+              </span>
+              <span className="block text-xs text-ink-2">
+                {role === 'manager' ? 'Your own jobs and tasks' : 'Every job and who is on it'}
+              </span>
             </span>
-            <span className="block text-xs text-ink-2">
-              {role === 'manager' ? 'Your own jobs and tasks' : 'Every job and who is on it'}
-            </span>
-          </span>
-        </button>
+          </button>
+        )}
 
         <button className="list-row" onClick={onSwitchStaff}>
           <LogOut size={20} aria-hidden="true" />
@@ -106,10 +113,10 @@ export default function MeScreen({ staff, role, theme, onToggleTheme, onSwitchSt
         <div className="list-row">
           <Info size={20} aria-hidden="true" className="text-ink-2" />
           <span className="min-w-0 flex-1 text-xs leading-relaxed text-ink-2">
-            Prototype. Progress you record and the staff list are real and shared; the jobs,
-            addresses and task lists are demonstration data, and photos stay on this phone.
-            There is no sign-in — picking a name says who you are, it does not restrict
-            anything.
+            Prototype. The jobs, addresses and staff list are real and shared; photos
+            stay on this phone for now. There is no sign-in — picking a name says who you
+            are. Managing is limited to people the office has set up for it; everything
+            else is unrestricted.
           </span>
         </div>
       </div>
