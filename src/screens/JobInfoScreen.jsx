@@ -5,14 +5,28 @@ import { Fragment } from 'react'
 // The heading is dropped when this section is the whole screen: the nav bar
 // is already showing its name, and printing it again immediately underneath
 // is the same thing said twice.
-function Section({ title, children }) {
+function Section({ title, empty, children }) {
   return (
     <section className="mb-6">
       {title && (
         <h2 className="mb-2 text-xs font-medium text-ink-2">{title}</h2>
       )}
       <div className="overflow-hidden rounded-2xl border border-line bg-surface">
-        {children}
+        {/* Every Field renders nothing for a blank value, so a section with
+            nothing in it used to be an empty bordered card — a thin grey line
+            and no words. Someone tapping "Who to call" and getting that
+            cannot tell whether the app is broken, still loading, or simply
+            has no number for this job. Say which, and say who can fix it. */}
+        {empty ? (
+          <div className="px-4 py-6">
+            <p className="text-sm text-ink-2">{empty}</p>
+            <p className="mt-1 text-xs text-ink-2">
+              The office adds this on the dashboard.
+            </p>
+          </div>
+        ) : (
+          children
+        )}
       </div>
     </section>
   )
@@ -49,10 +63,23 @@ function Field({ label, value, href, mono = false }) {
 // the sections differ in what they list, not in how they behave.
 export default function JobInfoScreen({ job, section }) {
   const show = (key) => !section || section === key
+
+  // Worked out here rather than inside Section, because only the caller knows
+  // which fields that section was going to render. A contact counts as
+  // nothing at all unless it carries a way of reaching someone: a row with a
+  // name and no number is a card with nobody to ring on it.
+  const noAccess = !job.site.address && !job.site.gateCode && !job.site.parking && !job.site.hours
+  const noContacts = !job.contacts.some((c) => c.name || c.phone || c.email)
+  const noWork = !job.scope && !job.switchboardLocation && !job.supply
+  const noSafety = job.hazards.length === 0 && !job.inductionRequired
+
   return (
     <>
       {show('access') && (
-      <Section title={section ? null : 'Getting in'}>
+      <Section
+        title={section ? null : 'Getting in'}
+        empty={noAccess ? 'No address or access details for this job yet.' : null}
+      >
         {/* mapQuery is a tidied search string for the few sites whose postal
             address does not find the gate. Nothing sets it today, and without
             the fallback this linked to ?q=undefined — a live link that opens
@@ -73,7 +100,10 @@ export default function JobInfoScreen({ job, section }) {
       )}
 
       {show('contacts') && (
-      <Section title={section ? null : 'Who to call'}>
+      <Section
+        title={section ? null : 'Who to call'}
+        empty={noContacts ? 'No contact recorded for this job yet.' : null}
+      >
         {job.contacts.map((c, i) => (
           <Fragment key={c.role ?? i}>
             {/* Phone and email are separate rows rather than one row with two
@@ -98,15 +128,25 @@ export default function JobInfoScreen({ job, section }) {
       )}
 
       {show('work') && (
-      <Section title={section ? null : 'The work'}>
+      <Section
+        title={section ? null : 'The work'}
+        empty={noWork ? 'Nothing recorded about the work on this job yet.' : null}
+      >
         <Field label="Scope" value={job.scope} />
         <Field label="Switchboard" value={job.switchboardLocation} />
         <Field label="Supply" value={job.supply} />
       </Section>
       )}
 
-      {show('safety') && (job.hazards.length > 0 || job.inductionRequired) && (
-        <Section title={section ? null : 'Safety'}>
+      {/* Shown even with nothing in it. Hiding the section meant tapping
+          Safety and landing on a screen with no Safety heading anywhere on
+          it, which reads as "no hazards here" — a claim this app is in no
+          position to make about a site it holds no information on. */}
+      {show('safety') && (
+        <Section
+          title={section ? null : 'Safety'}
+          empty={noSafety ? 'No hazards or induction recorded for this job yet.' : null}
+        >
           {/* A string, not a flag: what the office types is "site office, ask
               for Dave", and the old fixed sentence would have thrown that
               away and shown "Required before you start" instead — true, but
@@ -130,7 +170,11 @@ export default function JobInfoScreen({ job, section }) {
 
       {/* Dates sit with the work rather than in a folder of their own: "what
           is this job and when is it due" is one question. */}
-      {show('work') && (
+      {/* Hidden when empty rather than given an empty state, unlike Safety
+          above: a missing Dates card claims nothing, while a missing Safety
+          card would read as "no hazards". Without this, a job with no dates
+          put a second empty card directly under the first. */}
+      {show('work') && (job.dates.start || job.dates.target || job.dates.thisWeek) && (
       <Section title="Dates">
         <Field label="Started" value={job.dates.start} />
         <Field label="Target finish" value={job.dates.target} />
