@@ -159,16 +159,29 @@ export default function JobTasksScreen({
         <Folder
           icon={Phone}
           name="Who to call"
-          detail={`${job.contacts.length} ${job.contacts.length === 1 ? 'number' : 'numbers'}`}
+          // With one contact — which is what the office types in — the name
+          // is more use on the tile than the word "1 number", because it
+          // answers the question without the tap. A contact recorded with
+          // only an email also made "1 number" a lie.
+          detail={
+            job.contacts.length === 1 && job.contacts[0].name
+              ? job.contacts[0].name
+              : `${job.contacts.length} ${job.contacts.length === 1 ? 'contact' : 'contacts'}`
+          }
           onClick={() => onOpenInfo('contacts')}
         />
         <Folder
           icon={TriangleAlert}
           name="Safety"
+          // Hazards win over the induction note when there are both. An
+          // induction is a formality; a hazard is the thing that hurts you,
+          // and it was being hidden behind the formality.
           detail={
-            job.inductionRequired
-              ? 'Induction required'
-              : `${job.hazards.length} ${job.hazards.length === 1 ? 'hazard' : 'hazards'}`
+            job.hazards.length
+              ? `${job.hazards.length} ${job.hazards.length === 1 ? 'hazard' : 'hazards'}`
+              : job.inductionRequired
+                ? 'Induction required'
+                : 'Nothing recorded'
           }
           onClick={() => onOpenInfo('safety')}
         />

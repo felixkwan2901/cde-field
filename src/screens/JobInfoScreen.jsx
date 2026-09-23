@@ -1,3 +1,4 @@
+import { Fragment } from 'react'
 // Read-only, ordered by what you need standing at a gate rather than by what
 // a database would list first: how to get in, who to ring, what the work is,
 // what will hurt you, when it's due.
@@ -73,13 +74,25 @@ export default function JobInfoScreen({ job, section }) {
 
       {show('contacts') && (
       <Section title={section ? null : 'Who to call'}>
-        {job.contacts.map((c) => (
-          <Field
-            key={c.role}
-            label={`${c.role} · ${c.name}`}
-            value={c.phone}
-            href={`tel:${c.phone.replace(/\s/g, '')}`}
-          />
+        {job.contacts.map((c, i) => (
+          <Fragment key={c.role ?? i}>
+            {/* Phone and email are separate rows rather than one row with two
+                links: this is tapped one-handed on a site, and two targets
+                inside one row is how you ring someone when you meant to
+                email them. Either may be absent — Field renders nothing for
+                a blank value, so a contact with only an email still shows,
+                which the old single-row version did not. */}
+            <Field
+              label={`${c.role} · ${c.name}`}
+              value={c.phone}
+              href={c.phone ? `tel:${c.phone.replace(/\s/g, '')}` : undefined}
+            />
+            <Field
+              label={c.phone ? 'Email' : `${c.role} · ${c.name}`}
+              value={c.email}
+              href={c.email ? `mailto:${c.email}` : undefined}
+            />
+          </Fragment>
         ))}
       </Section>
       )}
@@ -94,7 +107,21 @@ export default function JobInfoScreen({ job, section }) {
 
       {show('safety') && (job.hazards.length > 0 || job.inductionRequired) && (
         <Section title={section ? null : 'Safety'}>
-          {job.inductionRequired && <Field label="Induction" value="Required before you start" />}
+          {/* A string, not a flag: what the office types is "site office, ask
+              for Dave", and the old fixed sentence would have thrown that
+              away and shown "Required before you start" instead — true, but
+              not the part you needed. `true` still renders the sentence, so
+              an older record does not come through blank. */}
+          {job.inductionRequired && (
+            <Field
+              label="Induction"
+              value={
+                typeof job.inductionRequired === 'string'
+                  ? job.inductionRequired
+                  : 'Required before you start'
+              }
+            />
+          )}
           {job.hazards.map((h, i) => (
             <Field key={i} label={`Hazard ${i + 1}`} value={h} />
           ))}
