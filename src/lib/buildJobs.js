@@ -53,6 +53,11 @@ export function buildJob(entry, templates = {}) {
     jobNumber,
     jobName: String(entry.jobName ?? '').trim() || `Job ${jobNumber}`,
     type,
+    // The kind of work, as set on the dashboard's Projects tab — "Commercial
+    // New Build" rather than the "commercial" that `type` reduces it to for
+    // choosing a checklist. The list screen groups by this, so the grouping
+    // and the tasks inside a job can never disagree about what a job is.
+    category: typeof entry.category === 'string' ? entry.category.trim() : '',
     tasks,
     // Everything below is empty rather than guessed, and the shape matters as
     // much as the emptiness: the screens iterate the lists and read through

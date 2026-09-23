@@ -52,10 +52,18 @@ export default function JobInfoScreen({ job, section }) {
     <>
       {show('access') && (
       <Section title={section ? null : 'Getting in'}>
+        {/* mapQuery is a tidied search string for the few sites whose postal
+            address does not find the gate. Nothing sets it today, and without
+            the fallback this linked to ?q=undefined — a live link that opens
+            Maps on nothing, which is worse than no link at all. */}
         <Field
           label="Site address"
           value={job.site.address}
-          href={`https://maps.google.com/?q=${encodeURIComponent(job.site.mapQuery)}`}
+          href={
+            job.site.address
+              ? `https://maps.google.com/?q=${encodeURIComponent(job.site.mapQuery || job.site.address)}`
+              : undefined
+          }
         />
         <Field label="Gate / key" value={job.site.gateCode} mono />
         <Field label="Parking" value={job.site.parking} />

@@ -1,10 +1,11 @@
 import { useState } from 'react'
-import { ChevronRight, MapPin, Star } from 'lucide-react'
+import { ChevronDown, ChevronRight, MapPin, Star } from 'lucide-react'
 import ProgressRing from '../components/ProgressRing'
 import EmptyState, { SkeletonRows } from '../components/EmptyState'
 import { dayProgress, jobProgress, progressCaption } from '../lib/progress'
 import { relativeTime, today } from '../lib/format'
 import { readStarred, toggleStarred } from '../lib/starred'
+import { readOpenCategories, toggleCategory } from '../lib/openCategories'
 
 // The card and the star are siblings, not nested.
 //
@@ -80,8 +81,28 @@ export default function TodayScreen({ jobs, loading, onOpenJob, staffId }) {
   const isStarred = (job) => starred.includes(String(job.jobNumber))
   const onToggleStar = (jobNumber) => setStarred(toggleStarred(staffId, jobNumber))
 
+  const [open, setOpen] = useState(() => readOpenCategories(staffId))
+  const onToggleCategory = (name) => setOpen(toggleCategory(staffId, name))
+
   const mine = jobs.filter(isStarred)
   const rest = jobs.filter((j) => !isStarred(j))
+
+  // Twenty-eight jobs in one column is a scroll, and what you are looking for
+  // is nearly always a kind of work rather than a name you can picture. So
+  // the rest of the list arrives as kinds, closed, and you open the one you
+  // want.
+  //
+  // The kind comes from the type of work set on the dashboard, which is the
+  // same field that decides the checklist — so the grouping here and the
+  // tasks inside a job can never disagree about what a job is.
+  const groups = []
+  for (const job of rest) {
+    const name = (job.category || '').trim() || 'No type set'
+    const found = groups.find((g) => g.name === name)
+    if (found) found.jobs.push(job)
+    else groups.push({ name, jobs: [job] })
+  }
+  groups.sort((a, b) => b.jobs.length - a.jobs.length || a.name.localeCompare(b.name))
 
   // The ring follows whatever the heading is about. Across twenty-eight jobs
   // nobody has touched it reads 0% forever and means nothing; across the two
@@ -132,20 +153,46 @@ export default function TodayScreen({ jobs, loading, onOpenJob, staffId }) {
             </ul>
           )}
 
-          {rest.length > 0 && (
+          {groups.length > 0 && (
             <>
               <p className="list-label">{mine.length ? 'Every other job' : 'Every job'}</p>
-              <ul className="flex flex-col gap-2">
-                {rest.map((job) => (
-                  <JobCard
-                    key={job.id}
-                    job={job}
-                    starred={false}
-                    onOpen={onOpenJob}
-                    onToggleStar={onToggleStar}
-                  />
-                ))}
-              </ul>
+              {groups.map((group) => {
+                const isOpen = open.includes(group.name)
+                return (
+                  <div key={group.name} className="mb-2">
+                    <button
+                      type="button"
+                      onClick={() => onToggleCategory(group.name)}
+                      aria-expanded={isOpen}
+                      className="tap pressable card flex w-full items-center gap-3 p-4 text-left"
+                    >
+                      {isOpen ? (
+                        <ChevronDown size={18} className="shrink-0 text-ink-2" aria-hidden="true" />
+                      ) : (
+                        <ChevronRight size={18} className="shrink-0 text-ink-2" aria-hidden="true" />
+                      )}
+                      <span className="min-w-0 flex-1 truncate text-sm font-medium">{group.name}</span>
+                      {/* A closed section still says how many are in it, so
+                          folding hides the rows and never the fact that they
+                          are there. */}
+                      <span className="shrink-0 text-xs text-ink-2">{group.jobs.length}</span>
+                    </button>
+                    {isOpen && (
+                      <ul className="mt-2 flex flex-col gap-2">
+                        {group.jobs.map((job) => (
+                          <JobCard
+                            key={job.id}
+                            job={job}
+                            starred={false}
+                            onOpen={onOpenJob}
+                            onToggleStar={onToggleStar}
+                          />
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                )
+              })}
             </>
           )}
         </>

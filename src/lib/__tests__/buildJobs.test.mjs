@@ -109,3 +109,21 @@ test('tasks are built blank, for the merge step to fill in', () => {
 test('a job number that arrives as a number still works', () => {
   assert.equal(buildJobs([{ jobNumber: 8183, jobName: 'X' }], TEMPLATES)[0].jobNumber, '8183')
 })
+
+// The Today screen groups by this. It went missing once already: the publish
+// script was writing it and buildJob was quietly dropping it, so every job
+// landed in "No type set" while the data was right all along.
+test('the category comes through for the list to group on', () => {
+  const job = buildJob(
+    { jobNumber: '1', jobName: 'X', category: 'Commercial New Build', type: 'commercial' },
+    TEMPLATES,
+  )
+  assert.equal(job.category, 'Commercial New Build')
+})
+
+test('a missing or odd category is an empty string, not undefined', () => {
+  for (const category of [undefined, null, 42, {}]) {
+    assert.equal(buildJob({ jobNumber: '1', category }, TEMPLATES).category, '')
+  }
+  assert.equal(buildJob({ jobNumber: '1', category: '  Solar  ' }, TEMPLATES).category, 'Solar')
+})

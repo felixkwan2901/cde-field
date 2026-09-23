@@ -19,7 +19,7 @@ export default function MapScreen({ jobs, loading, onOpenJob }) {
       <EmptyState
         icon={MapPin}
         title="No sites to place"
-        body="A job appears here once it has an address on it."
+        body="These jobs have addresses but no map coordinates, so there is nothing to place a pin at yet."
       />
     )
   }

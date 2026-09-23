@@ -10,6 +10,19 @@ import { readCollapsed, writeCollapsed } from '../lib/collapsed'
 import { taskState } from '../lib/taskState'
 import { relativeTime } from '../lib/format'
 
+// "48 Wairakei Road, Bryndwr, Christchurch 8051" → "Bryndwr". The export
+// writes street, suburb, city and postcode comma-separated; the suburb is the
+// second part when there is one, and the whole thing is short enough to show
+// when there is not.
+function suburbOf(address) {
+  const parts = String(address ?? '')
+    .split(',')
+    .map((p) => p.trim())
+    .filter(Boolean)
+  if (parts.length === 0) return ''
+  return parts.length > 2 ? parts[1] : parts[parts.length - 1]
+}
+
 export default function JobTasksScreen({
   job,
   me,
@@ -108,6 +121,17 @@ export default function JobTasksScreen({
 
       </div>
 
+      {/* What the job actually is, in the office's own words.
+          
+          It sits above the folders rather than inside "The work" because it
+          is the first question someone arriving has, and a tap to answer
+          "what am I here for" is a tap too many. One line from the Jobs
+          export; absent when the export had nothing, rather than an empty
+          box. */}
+      {job.scope && (
+        <p className="mb-6 px-1 text-sm leading-relaxed text-ink-2">{job.scope}</p>
+      )}
+
       {/* The folders. Everything about the job that is not the task list,
           named by what you would be looking for rather than by where the
           data happens to sit — and each says what is inside, so the detail
@@ -121,7 +145,15 @@ export default function JobTasksScreen({
         <Folder
           icon={MapPin}
           name="Getting in"
-          detail={job.site.gateCode ? `Gate ${job.site.gateCode}` : 'Address & parking'}
+          // The suburb is the half of an address that tells you where you
+          // are going; the street number is the half you need once you are
+          // there. On a tile this narrow only one fits, so it is the suburb —
+          // and the full address is one tap away either way.
+          detail={
+            job.site.gateCode
+              ? `Gate ${job.site.gateCode}`
+              : suburbOf(job.site.address) || 'Address & parking'
+          }
           onClick={() => onOpenInfo('access')}
         />
         <Folder
