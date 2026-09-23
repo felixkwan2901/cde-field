@@ -34,19 +34,69 @@ function blankTask(template) {
 
 const toList = (v) => (Array.isArray(v) ? v : [])
 
+// Office-authored customization: reword a template task for this job, or add
+// a task specific to it, before anything about progress or the crew's own
+// edits enters the picture. `overrides` is one job's entry from
+// planning:field-checklist-overrides — { overrides: {taskId: label}, extra:
+// [{id, label}] } — read live by loadJobs() in dataSource.js, the same way
+// planning:job-details already is.
+//
+// The 21-task template itself is never touched — only this job's own copy of
+// it. A rename here never reaches another job, and never reaches this same
+// job's next re-publish either: the template stays the shared default, this
+// is a layer on top of it.
+function withOfficeChecklist(template, overrides) {
+  const labelOverrides = overrides?.overrides ?? {}
+  const extra = Array.isArray(overrides?.extra) ? overrides.extra : []
+
+  const templated = Array.isArray(template)
+    ? [...template]
+        .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
+        .map((t) => (labelOverrides[t.id] ? { ...t, label: labelOverrides[t.id] } : t))
+    : []
+
+  // Appended after the template, in the order the office added them — same
+  // ordering rule already used for hazards (office first, then site), so
+  // the list reads as a continuation rather than an unexplained reshuffle.
+  const extraTasks = extra.map((t) => ({ id: t.id, label: t.label, area: null }))
+
+  return [...templated, ...extraTasks]
+}
+
+// The crew's own edits, layered on top of the office-built list once this
+// job's own field:<job> record is available — see mergeRecordedProgress in
+// dataSource.js, the only caller. Site wins over office on the same task id:
+// the person standing there is the more current source, the same precedent
+// already set for switchboard, supply and induction.
+//
+// A site-added extra task is appended as a normal blank task, not a special
+// kind of row — it goes through the exact same pct/na merge afterwards as
+// every other task, because recording progress against a task someone added
+// this morning is not a different feature from recording it against one of
+// the 21.
+export function applySiteTaskOverrides(tasks, record) {
+  const siteOverrides = record?.taskOverrides ?? {}
+  const siteExtra = Array.isArray(record?.extraTasks) ? record.extraTasks : []
+
+  const reworded = tasks.map((task) =>
+    siteOverrides[task.id]?.label ? { ...task, name: siteOverrides[task.id].label } : task,
+  )
+  const extraTasks = siteExtra.map((t) => blankTask({ id: t.id, label: t.label, area: null }))
+
+  return [...reworded, ...extraTasks]
+}
+
 // `type` decides which checklist a job gets. Nothing in the workbook says
 // which a job is, so it only ever arrives from someone setting it — until
 // then the job has no tasks and says so.
-export function buildJob(entry, templates = {}) {
+export function buildJob(entry, templates = {}, checklistOverrides = null) {
   const jobNumber = String(entry?.jobNumber ?? '').trim()
   if (!jobNumber) return null
 
   const type = entry.type === 'commercial' || entry.type === 'residential' ? entry.type : null
   const template = type ? templates[type] : null
 
-  const tasks = Array.isArray(template)
-    ? [...template].sort((a, b) => (a.order ?? 0) - (b.order ?? 0)).map(blankTask)
-    : []
+  const tasks = withOfficeChecklist(template, checklistOverrides).map(blankTask)
 
   const job = {
     id: jobNumber,
@@ -98,7 +148,9 @@ export function buildJob(entry, templates = {}) {
 
 // The published list, in the order the office put it in, skipping anything
 // without a job number rather than rendering a blank row.
-export function buildJobs(list, templates = {}) {
+export function buildJobs(list, templates = {}, checklistOverridesByJob = {}) {
   if (!Array.isArray(list)) return []
-  return list.map((entry) => buildJob(entry, templates)).filter(Boolean)
+  return list
+    .map((entry) => buildJob(entry, templates, checklistOverridesByJob?.[String(entry?.jobNumber)]))
+    .filter(Boolean)
 }

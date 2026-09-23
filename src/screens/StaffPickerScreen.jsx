@@ -8,8 +8,14 @@ import { Users } from 'lucide-react'
 // that is worth knowing whichever chair you are in — so the heading cannot
 // be "Who's on site?" for both. It asked a manager sitting at a desk a
 // question about a site they were not on.
-export default function StaffPickerScreen({ staff, loading, role, onPick }) {
+export default function StaffPickerScreen({ staff, loading, role, admins, onPick }) {
   const managing = role === 'manager'
+  // Only the names on the admin list, when picking "managing" — scrolling
+  // past seventeen names that would just bounce back with an explanation is
+  // friction the person picking "on site" has already had, and there is no
+  // reason to make it happen twice. The gate in App.jsx's pickStaff stays as
+  // the real enforcement; this is what makes the common case not need it.
+  const visible = managing ? staff.filter((p) => admins?.has(String(p.id))) : staff
   return (
     <div className="app-frame nav-fade">
       <div className="app-scroll mx-auto w-full max-w-md px-4">
@@ -23,11 +29,15 @@ export default function StaffPickerScreen({ staff, loading, role, onPick }) {
       </div>
       {loading ? (
         <SkeletonRows count={5} />
-      ) : staff.length === 0 ? (
+      ) : visible.length === 0 ? (
         <EmptyState
           icon={Users}
-          title="No crew on the roster yet"
-          body="Add people in the dashboard and they'll appear here."
+          title={managing ? 'No admins set up yet' : 'No crew on the roster yet'}
+          body={
+            managing
+              ? 'Add a staff id to planning:field-admins in the dashboard.'
+              : "Add people in the dashboard and they'll appear here."
+          }
         />
       ) : (
         // Short names in full-width rows waste two thirds of every row on
@@ -37,7 +47,7 @@ export default function StaffPickerScreen({ staff, loading, role, onPick }) {
         // beside it — and four consecutive "J" circles slowed the scan down
         // rather than speeding it up.
         <ul className="name-grid">
-          {staff.map((person) => (
+          {visible.map((person) => (
             <li key={person.id}>
               <button onClick={() => onPick(person)} className="name-tile">
                 {person.name}

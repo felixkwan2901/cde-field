@@ -73,6 +73,7 @@ export default function App() {
   // Starts empty, which is the fail-closed default: until this loads,
   // nobody is treated as an admin rather than everybody.
   const [admins, setAdmins] = useState(() => new Set())
+  const [adminsLoading, setAdminsLoading] = useState(true)
   const [jobs, setJobs] = useState([])
   const [jobsLoading, setJobsLoading] = useState(true)
   // Bumped to ask for a re-read. An effect keyed on it beats calling a
@@ -112,7 +113,10 @@ export default function App() {
       setRoster(list)
       setRosterLoading(false)
     })
-    listFieldAdmins().then(setAdmins)
+    listFieldAdmins().then((list) => {
+      setAdmins(list)
+      setAdminsLoading(false)
+    })
   }, [])
 
   useEffect(() => {
@@ -472,7 +476,15 @@ export default function App() {
 
   if (!role) return <RoleScreen onPick={setRole} />
   if (!staff) {
-    return <StaffPickerScreen staff={roster} loading={rosterLoading} role={role} onPick={pickStaff} />
+    return (
+      <StaffPickerScreen
+        staff={roster}
+        loading={rosterLoading || (role === 'manager' && adminsLoading)}
+        role={role}
+        admins={admins}
+        onPick={pickStaff}
+      />
+    )
   }
 
   const tabs = role === 'manager' ? MANAGER_TABS : WORKER_TABS
