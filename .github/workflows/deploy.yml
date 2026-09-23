@@ -31,7 +31,17 @@ jobs:
       - name: Record this deploy's commit as the build ID
         run: echo "$GITHUB_SHA" > public/build-id.txt
 
+      # Without VITE_API_BASE this build talks to the old upload Worker, whose
+      # allowlist has no planning:field-jobs — so the read rejected, the job
+      # list never arrived, and this copy sat on skeleton rows for ever. It
+      # points at the field Worker's API instead, cross-origin.
+      #
+      # APP_BASE stays at its /cde-field/ default: this copy is served from a
+      # repo subpath, unlike the Worker one.
       - run: npm run build
+        env:
+          VITE_API_BASE: https://cd-field.fkw24.workers.dev/api
+          VITE_DASHBOARD_URL: https://cd-dashboard.fkw24.workers.dev/
 
       - uses: peaceiris/actions-gh-pages@v4
         with:

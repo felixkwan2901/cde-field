@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { Home, Map as MapIcon, User, Users, Briefcase, FileText } from 'lucide-react'
+import { Home, Map as MapIcon, User, Users, Briefcase, FileText, WifiOff } from 'lucide-react'
 import Screen from './components/Screen'
 import SyncBadge from './components/SyncBadge'
 import UndoToast from './components/UndoToast'
-import { SkeletonRows } from './components/EmptyState'
+import EmptyState, { SkeletonRows } from './components/EmptyState'
 import RoleScreen from './screens/RoleScreen'
 import StaffPickerScreen from './screens/StaffPickerScreen'
 import ManagerScreen from './screens/ManagerScreen'
@@ -76,6 +76,11 @@ export default function App() {
   // happen in the promise callback rather than synchronously during render,
   // which is the difference between one render and a cascade of them.
   const [reloadKey, setReloadKey] = useState(0)
+  // A failed job read used to leave jobsLoading true for ever, so the screen
+  // sat on skeleton rows with no way out. That is not a rare case on a site:
+  // no signal, or the office has not published the list yet. It has to say so
+  // and offer to try again.
+  const [jobsError, setJobsError] = useState(null)
   const [view, setView] = useState({ name: 'today' })
   // Set when a QR code was scanned. Held rather than acted on immediately,
   // because a first-time scanner still has to say who they are — and in a
@@ -112,6 +117,7 @@ export default function App() {
     load.then((list) => {
       if (cancelled) return
       setJobs(list)
+      setJobsError(null)
       setJobsLoading(false)
       // Resolved here rather than in an effect of its own, so the scanned
       // job opens in the same update that delivers the jobs — one render,
@@ -125,6 +131,12 @@ export default function App() {
         clearDeepLinkJob()
         pendingJobRef.current = null
       }
+    })
+    load.catch((err) => {
+      if (cancelled) return
+      console.error('Could not load the job list', err)
+      setJobsError(err)
+      setJobsLoading(false)
     })
     return () => {
       cancelled = true
@@ -383,6 +395,28 @@ export default function App() {
         />
       )
     }
+    // Every view below needs the job list, so the failure is handled once
+    // here rather than four times over with four slightly different wordings.
+    if (jobsError && ['today', 'jobs', 'map', 'report'].includes(view.name)) {
+      return (
+        <div>
+          <EmptyState
+            icon={WifiOff}
+            title="Couldn't load the jobs"
+            body="No connection, or the office hasn't published the list yet. Anything you've already recorded is saved and will send when you're back."
+          />
+          <div className="px-6">
+            <button
+              type="button"
+              onClick={() => { setJobsLoading(true); setReloadKey((k) => k + 1) }}
+              className="tap pressable card flex w-full items-center justify-center gap-2 p-4 text-sm font-medium"
+            >
+              Try again
+            </button>
+          </div>
+        </div>
+      )
+    }
     if (view.name === 'today') {
       return role === 'manager' ? (
         <ManagerScreen
@@ -394,7 +428,13 @@ export default function App() {
           onOpenSection={(key) => navTo({ name: key })}
         />
       ) : (
-        <TodayScreen jobs={jobs} loading={jobsLoading} onOpenJob={openJob} />
+        <TodayScreen
+          key={staff?.id}
+          jobs={jobs}
+          loading={jobsLoading}
+          onOpenJob={openJob}
+          staffId={staff?.id}
+        />
       )
     }
     if (view.name === 'jobs') {
