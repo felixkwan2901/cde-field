@@ -4,7 +4,8 @@ import ProgressRing from '../components/ProgressRing'
 import { SkeletonRows } from '../components/EmptyState'
 import { crewActivity, lastTouched } from '../lib/crewActivity'
 import { jobProgress, progressCaption } from '../lib/progress'
-import { relativeTime, initials } from '../lib/format'
+import { relativeTime } from '../lib/format'
+import TeamAvatar from '../components/TeamAvatar'
 
 // The office's view, and it leads with people rather than jobs.
 //
@@ -79,9 +80,7 @@ export default function ManagerScreen({ section, jobs, roster, loading, onOpenJo
             key={person.name}
             className="list-row"
           >
-            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-surface-2 text-xs font-medium">
-              {initials(person.name)}
-            </span>
+            <TeamAvatar name={person.name} />
             <div className="min-w-0 flex-1">
               <p className="truncate text-sm font-medium">{person.name}</p>
               {person.last ? (
@@ -133,9 +132,7 @@ export default function ManagerScreen({ section, jobs, roster, loading, onOpenJo
             <ul className="list-group">
               {silent.map((person) => (
                 <li key={person.name} className="list-row">
-                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-surface-2 text-xs font-medium">
-                    {initials(person.name)}
-                  </span>
+                  <TeamAvatar name={person.name} />
                   <p className="min-w-0 flex-1 truncate text-sm">{person.name}</p>
                 </li>
               ))}

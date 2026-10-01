@@ -793,6 +793,30 @@ body {
 
 /* A tile is small enough that shrinking it reads as a press rather than
    leaving a gap, which is why this differs from .list-row:active. */
+.name-tile__name {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  line-height: 1.2;
+}
+.name-tile__rest {
+  font-size: var(--text-xs);
+  font-weight: 400;
+  color: var(--ink-2);
+}
+.picker-scene .name-tile__rest {
+  color: rgba(255, 255, 255, 0.65);
+}
+.name-tile__face {
+  margin-right: var(--space-2);
+  background: var(--surface-2);
+}
+.picker-scene .name-tile__face {
+  background: #142419;
+  color: #ffffff;
+  border: 1px solid #3a5244;
+}
+
 .name-tile:active {
   background: var(--surface-2);
   transform: scale(0.97);

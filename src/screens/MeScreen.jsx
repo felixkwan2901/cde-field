@@ -1,6 +1,7 @@
 import { LogOut, HardHat, ClipboardList, Info, LayoutDashboard, ExternalLink } from 'lucide-react'
 import InstallPrompt from '../components/InstallPrompt'
-import { initials } from '../lib/format'
+import TeamAvatar from '../components/TeamAvatar'
+import { teamMember } from '../lib/teamPhotos'
 
 // Where the office dashboard lives. The two apps are separate builds on
 // separate URLs, so getting back is a real link rather than a route — and
@@ -24,13 +25,11 @@ export default function MeScreen({ staff, role, isAdmin, onSwitchStaff, onSwitch
   return (
     <>
       <div className="card mb-6 flex items-center gap-2 p-4">
-        <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-surface-2 text-md font-medium">
-          {initials(staff.name)}
-        </span>
+        <TeamAvatar name={staff.name} size={56} />
         <div className="min-w-0 flex-1">
           <p className="truncate text-md font-medium">{staff.name}</p>
           <p className="text-xs text-ink-2">
-            {role === 'manager' ? 'Managing' : 'On site'}
+            {[teamMember(staff.name)?.role, role === 'manager' ? 'Managing' : 'On site'].filter(Boolean).join(' · ')}
           </p>
         </div>
       </div>

@@ -1,6 +1,7 @@
 import EmptyState, { SkeletonRows } from '../components/EmptyState'
 import PickerShell from '../components/PickerShell'
 import { Users } from 'lucide-react'
+import TeamAvatar from '../components/TeamAvatar'
 
 // Tapping a name IS the commit — no confirm step, no Continue button. It is
 // the first thing anyone does each morning and it should cost one tap.
@@ -42,15 +43,22 @@ export default function StaffPickerScreen({ staff, loading, role, admins, onPick
       ) : (
         // Short names in full-width rows waste two thirds of every row on
         // whitespace and pay for it in scroll. Two columns fits all eighteen
-        // on one screen. The initials chip is gone with them: fifteen of the
-        // eighteen are single names, so it only repeated the letter sitting
-        // beside it — and four consecutive "J" circles slowed the scan down
-        // rather than speeding it up.
+        // on one screen. The initials chip went for repeating the letter
+        // beside it; a photo is different — it is the same face the
+        // dashboard shows, and finding yourself by face is quicker than
+        // reading four names that start with J.
         <ul className="name-grid">
           {visible.map((person) => (
             <li key={person.id}>
               <button onClick={() => onPick(person)} className="name-tile">
-                {person.name}
+                <TeamAvatar name={person.name} size={36} className="name-tile__face" />
+                {/* Two lines, not one truncated one: with a face in the
+                    tile a surname no longer fits beside it on a phone, and
+                    "Andy Sc…" is worse than no surname at all. */}
+                <span className="name-tile__name">
+                  <span className="truncate">{person.name.split(/\s+/)[0]}</span>
+                  <span className="name-tile__rest truncate">{person.name.split(/\s+/).slice(1).join(' ')}</span>
+                </span>
               </button>
             </li>
           ))}
