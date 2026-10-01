@@ -1,5 +1,5 @@
 import EmptyState, { SkeletonRows } from '../components/EmptyState'
-import PickerBackdrop from '../components/PickerBackdrop'
+import PickerShell from '../components/PickerShell'
 import { Users } from 'lucide-react'
 
 // Tapping a name IS the commit — no confirm step, no Continue button. It is
@@ -18,12 +18,10 @@ export default function StaffPickerScreen({ staff, loading, role, admins, onPick
   // the real enforcement; this is what makes the common case not need it.
   const visible = managing ? staff.filter((p) => admins?.has(String(p.id))) : staff
   return (
-    <div className="app-frame nav-fade picker-scene">
-      <PickerBackdrop />
-      <div className="app-scroll mx-auto w-full max-w-md px-4">
-      <div className="safe-top pt-8 pb-6">
+    <PickerShell pitch={managing ? 'Every job, who is on it, and what has not moved.' : "See your jobs, record what's done, and let the office see it the moment you tap."}>
+      <div className="pb-5">
         <h1 className="large-title">{managing ? 'Who are you?' : "Who's on site?"}</h1>
-        <p className="mt-1 text-xs text-ink-2">
+        <p className="mt-1 text-sm text-ink-2">
           {managing
             ? 'Pick your name so your changes are recorded against it.'
             : "Pick your name to see today's jobs."}
@@ -58,8 +56,6 @@ export default function StaffPickerScreen({ staff, loading, role, admins, onPick
           ))}
         </ul>
       )}
-      <div className="safe-bottom h-4" />
-      </div>
-    </div>
+    </PickerShell>
   )
 }

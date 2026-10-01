@@ -881,84 +881,116 @@ body {
   }
 }
 
-/* ---------- Netflix-style backdrop, RoleScreen / StaffPickerScreen ---------- */
-
-.picker-backdrop {
-  position: fixed;
-  inset: 0;
-  z-index: 0;
-}
-.picker-backdrop__grid {
-  position: absolute;
-  inset: 0;
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  /* Six photos, three columns — without this the rows default to "auto",
-     which sizes each row to its content instead of stretching to fill the
-     container. The divs have no content (they're empty, styled only by
-     background-image), so "auto" rows collapsed unpredictably instead of
-     splitting the viewport height evenly — the actual cause of the broken,
-     lopsided grid this was first shipped with. */
-  grid-template-rows: repeat(2, 1fr);
-  gap: 2px;
-  filter: saturate(0.9) brightness(0.5);
-}
-.picker-backdrop__grid > div {
-  background-size: cover;
-  background-position: center;
-  background-color: var(--surface-2);
-}
-@media (max-width: 480px) {
-  .picker-backdrop__grid {
-    grid-template-columns: repeat(2, 1fr);
-    grid-template-rows: repeat(3, 1fr);
-  }
-}
-/* Same trick as the dashboard's login page: a dark gradient over the photos
-   rather than the photos alone at low opacity. It darkens the edges where
-   the eye should not linger while leaving the centre visible enough to read
-   as real project photos, not decoration. */
-.picker-backdrop__scrim {
-  position: absolute;
-  inset: 0;
-  background:
-    radial-gradient(ellipse at center, rgba(10, 14, 12, 0.35) 0%, rgba(10, 14, 12, 0.9) 75%),
-    linear-gradient(180deg, rgba(10, 14, 12, 0.8) 0%, rgba(10, 14, 12, 0.55) 30%, rgba(10, 14, 12, 0.88) 100%);
-}
-/* Dark regardless of the app's own light/dark setting — nobody has picked
-   anything yet, so there is no "current theme" for this screen to respect,
-   and Netflix's own picker is dark for the same reason a cinema is dark
-   before the film starts.
-   No position/z-index here: .picker-scene is applied to the same element as
-   .app-frame, and .app-frame is itself position:fixed — a second `position`
-   value on the same element from a later rule would win outright and
-   replace it rather than combine with it, which silently broke .app-frame's
-   own fixed-frame behaviour the first time this was written. The stacking
-   fix lives on .picker-scene's own children instead, below. */
+/* ---------- the opening screens: RoleScreen / StaffPickerScreen ----------
+   The same page as the dashboard's sign-in: one project photo with the mark
+   and a line about what this is, and a solid panel with the thing to do.
+   Phone: the photo is a band across the top. Laptop: it is the left half.
+   Dark regardless of the app's light/dark setting — nobody has picked
+   anything yet, so there is no "current theme" to respect.
+   .picker-scene sits on the same element as .app-frame (position:fixed), so
+   only the layout is changed here, never the position. */
 .picker-scene {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
   color: #ffffff;
-}
-.picker-scene > *:not(.picker-backdrop) {
-  position: relative;
-  z-index: 1;
+  background: #101c15;
 }
 .picker-scene .text-ink-2 {
-  color: rgba(255, 255, 255, 0.65);
+  color: rgba(255, 255, 255, 0.68);
 }
-
-/* Translucent tiles over the photos, the one deliberate borrow from
-   Netflix's own card treatment — flat black over a bright backdrop reads as
-   floating above it, which a fully opaque card does not. backdrop-filter is
-   skipped, same reasoning as the dashboard page: unsupported or slow on
-   exactly the older/low-end phones this app has to keep working on. */
+.picker-hero {
+  position: relative;
+  min-height: 236px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 20px;
+  background: #13211a center 40% / cover no-repeat;
+}
+.picker-hero::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(11, 21, 16, 0.72) 0%, rgba(11, 21, 16, 0.1) 40%, rgba(11, 21, 16, 0.2) 65%, rgba(11, 21, 16, 0.9) 100%);
+}
+.picker-hero > * {
+  position: relative;
+}
+.picker-hero__brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.picker-hero__eyebrow {
+  margin: 0 0 6px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #41b44a;
+}
+.picker-hero__line {
+  margin: 0;
+  max-width: 480px;
+  font-size: var(--text-md);
+  line-height: 1.2;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+}
+.picker-panel {
+  min-height: 0;
+  background: #101c15;
+  border-top: 1px solid #213128;
+}
+/* Laptop: side by side, the panel's content centred in its height. */
+@media (min-width: 880px) {
+  .picker-scene {
+    grid-template-rows: minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1.15fr) minmax(400px, 0.85fr);
+  }
+  .picker-hero {
+    padding: 36px 40px;
+    background-position: center;
+  }
+  .picker-hero__line {
+    font-size: var(--text-xl);
+    line-height: 1.15;
+  }
+  .picker-panel {
+    border-top: 0;
+    border-left: 1px solid #213128;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+}
+/* Cards and name tiles on the solid panel: a filled field with a visible
+   edge, like the dashboard's sign-in inputs, and big enough for a glove. */
 .picker-scene .card,
 .picker-scene .name-tile {
-  background: rgba(10, 14, 12, 0.72);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35);
+  background: #0a130e;
+  border: 1px solid #3a5244;
+  box-shadow: none;
+  color: #ffffff;
 }
+.picker-scene .name-tile {
+  min-height: 64px;
+  font-size: var(--text-md);
+  font-weight: 500;
+}
+.picker-scene .card:active,
 .picker-scene .name-tile:active {
-  background: rgba(255, 255, 255, 0.12);
+  background: #142419;
+  border-color: #41b44a;
+}
+@media (hover: hover) {
+  .picker-scene .card:hover,
+  .picker-scene .name-tile:hover {
+    border-color: #41b44a;
+  }
+}
+.picker-scene .large-title {
+  color: #ffffff;
 }
 @media (hover: hover) {
   .picker-scene .name-tile:hover {
