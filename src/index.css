@@ -923,18 +923,37 @@ body {
   flex-direction: column;
   justify-content: space-between;
   padding: 20px;
-  /* The photo comes from PickerShell (a bundled asset); this is the fill
-     behind it and how it sits. */
-  background: #13211a center 35% / cover no-repeat;
+  background: #13211a;
+  overflow: hidden;
+}
+/* The collage: three across, two down, a hairline between tiles. */
+.picker-hero__grid {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: repeat(2, 1fr);
+  gap: 2px;
+  filter: saturate(0.95) brightness(0.8);
+}
+.picker-hero__grid > div {
+  background: #1a2a21 center / cover no-repeat;
 }
 .picker-hero::before {
   content: '';
   position: absolute;
   inset: 0;
-  background: linear-gradient(180deg, rgba(11, 21, 16, 0.66) 0%, rgba(11, 21, 16, 0.08) 38%, rgba(11, 21, 16, 0.12) 60%, rgba(11, 21, 16, 0.88) 100%);
+  z-index: 1;
+  background: linear-gradient(180deg, rgba(11, 21, 16, 0.66) 0%, rgba(11, 21, 16, 0.12) 38%, rgba(11, 21, 16, 0.15) 60%, rgba(11, 21, 16, 0.88) 100%);
 }
 .picker-hero > * {
   position: relative;
+  z-index: 2;
+}
+.picker-hero > .picker-hero__grid {
+  position: absolute;
+  z-index: 0;
 }
 .picker-hero__brand {
   display: flex;

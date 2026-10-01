@@ -1,6 +1,5 @@
 import { CheckCircle2, MapPin, Send } from 'lucide-react'
 import Brand from './Brand'
-import hero from '../assets/hero-koawa.jpg'
 
 // The frame around the two screens nobody has identified themselves on yet
 // (RoleScreen, StaffPickerScreen) — the same page the dashboard's sign-in
@@ -13,15 +12,26 @@ import hero from '../assets/hero-koawa.jpg'
 // the seams between them were the first thing the eye found. Hotlinked as a
 // CSS background so that if cdelectrical.co.nz is slow or down the panel's
 // own dark fill shows and nothing is broken.
-// Two of the crew on the Kōawa Studios job (University of Canterbury), from
-// cdelectrical.co.nz/projects — people doing the work, not a finished house.
-// Bundled (172 KB JPEG) rather than hotlinked, so a phone never waits on the
-// marketing site for its own opening screen.
+// Six of Cassidy-Davies' own jobs (cdelectrical.co.nz/projects), tiled across
+// the photo side — the collage the owner preferred, inside the split layout.
+// Hotlinked as CSS backgrounds: a slow or unreachable marketing site shows a
+// dark tile, never a broken-image icon.
+const PROJECT_PHOTOS = [
+  'https://www.cdelectrical.co.nz/wp-content/uploads/2025/08/1.png',
+  'https://www.cdelectrical.co.nz/wp-content/uploads/2024/12/IMG_6354-1536x1152.jpg',
+  'https://www.cdelectrical.co.nz/wp-content/uploads/2024/12/AquaPro-1536x1104.jpg',
+  'https://www.cdelectrical.co.nz/wp-content/uploads/2024/11/uploads1715202201060-6bgnn2aulol-c76a6241ef84e850120e165b75daabcb1-360-Montreal-Street-21-scaled-1-1536x1025.jpg',
+  'https://www.cdelectrical.co.nz/wp-content/uploads/2024/12/IMG_5047-1536x1092.jpg',
+  'https://www.cdelectrical.co.nz/wp-content/uploads/2025/04/Stairs.png',
+]
 
 export default function PickerShell({ eyebrow = 'Field app', pitch, children }) {
   return (
     <div className="app-frame nav-fade picker-scene">
-      <aside className="picker-hero" style={{ backgroundImage: `url(${hero})` }} aria-hidden="true">
+      <aside className="picker-hero" aria-hidden="true">
+        <div className="picker-hero__grid">
+          {PROJECT_PHOTOS.map((url) => <div key={url} style={{ backgroundImage: `url('${url}')` }} />)}
+        </div>
         <div className="picker-hero__brand safe-top">
           <Brand size={44} />
           <span className="min-w-0">
