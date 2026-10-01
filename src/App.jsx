@@ -156,6 +156,18 @@ export default function App() {
     }
   }, [staff, role, reloadKey])
 
+  // The office changes things while a phone is in a pocket — a job's type of
+  // work, a new job, one archived. Re-read the list whenever the app comes
+  // back into view, and every five minutes while it stays open. The list
+  // reloads in the background: nothing is cleared, so the screen never
+  // flashes empty.
+  useEffect(() => {
+    const bump = () => { if (document.visibilityState === 'visible') setReloadKey((n) => n + 1) }
+    document.addEventListener('visibilitychange', bump)
+    const timer = setInterval(bump, 5 * 60 * 1000)
+    return () => { document.removeEventListener('visibilitychange', bump); clearInterval(timer) }
+  }, [])
+
   useEffect(() => {
     readQueue().then((q) => setPending(q.length))
     return startFlushing(async (result) => {
