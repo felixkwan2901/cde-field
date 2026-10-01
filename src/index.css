@@ -172,6 +172,71 @@
   color-scheme: dark;
 }
 
+/* ---------- sun mode ----------
+   Direct sun on a phone: auto-brightness is already at its ceiling and the
+   glass is reflecting the sky. The only levers left are ones that survive a
+   washed-out screen — more contrast, bigger and bolder type, thicker edges,
+   and no shadows at all. Every token this touches is one the components
+   already read, so nothing else changes. It always sits on the light theme
+   (see applySun in lib/theme.js). */
+:root[data-sun='1'] {
+  --page-plane: #ffffff;
+  --surface-1: #ffffff;
+  --surface-2: #ececec;
+
+  --text-primary: #000000;
+  --text-secondary: #1f1f1f;
+
+  --accent: #0b4722;
+  --accent-ink: #ffffff;
+
+  --border: #6b6b6b;
+  --border-strong: #000000;
+
+  --status-warning: #5a3800;
+  --status-warning-bg: rgba(90, 56, 0, 0.14);
+  --status-critical: #8a0f06;
+  --status-critical-bg: rgba(138, 15, 6, 0.14);
+
+  --shadow-card: none;
+
+  /* One step up the type scale, bolder, and a taller tap target. The
+     percentage chips are already 64px and position-stable, so they are
+     left alone. */
+  --text-xs: 16px;
+  --text-sm: 18px;
+  --text-md: 21px;
+  --text-lg: 25px;
+  --text-xl: 31px;
+  --text-2xl: 48px;
+  --font-weight-normal: 500;
+  --font-weight-medium: 600;
+  --weight-heading: 600;
+  --nav-h: 56px;
+  --tab-h: 66px;
+}
+
+:root[data-sun='1'] body {
+  font-weight: 500;
+}
+
+/* A card is lifted by a shadow everywhere else; in sun it is boxed, because
+   the shadow is gone. The tab bar and nav bar already use a border. */
+:root[data-sun='1'] .card {
+  border: 2px solid var(--border-strong);
+}
+
+:root[data-sun='1'] .tap {
+  min-height: 64px;
+  min-width: 64px;
+}
+
+/* Thicker edges on anything with an outline, so a control's boundary is
+   still a boundary when the screen is washed out. */
+:root[data-sun='1'] .border {
+  border-width: 2px;
+}
+
 
 @font-face {
   font-family: 'Geist';

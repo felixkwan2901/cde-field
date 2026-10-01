@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { Home, Map as MapIcon, User, Users, Briefcase, FileText, WifiOff } from 'lucide-react'
 import Screen from './components/Screen'
 import SyncBadge from './components/SyncBadge'
-import { Sun, Moon } from 'lucide-react'
+import { Sun, SunMedium, Moon } from 'lucide-react'
 import UndoToast from './components/UndoToast'
 import EmptyState, { SkeletonRows } from './components/EmptyState'
 import RoleScreen from './screens/RoleScreen'
@@ -19,11 +19,13 @@ import MapScreen from './screens/MapScreen'
 import MeScreen from './screens/MeScreen'
 import { addExtraTask, addJobNote, addSiteHazard, getJob, listAllJobs, listFieldAdmins, listJobsForStaff, listStaff, recordVisit, removeExtraTask, removeSiteHazard, setSiteField, setTaskLabelOverride, setTaskPercent, addAttachment } from './lib/dataSource'
 import { readStaff, writeStaff } from './lib/identity'
-import { applyTheme, readTheme } from './lib/theme'
+import { applySun, applyTheme, readSun, readTheme } from './lib/theme'
 import { enqueue, readQueue, startFlushing } from './lib/outbox'
 import { clearDeepLinkJob, readDeepLinkJob } from './lib/deepLink'
 
-const initialTheme = applyTheme(readTheme())
+const initialSun = applySun(readSun())
+// Sun mode always sits on the light theme.
+const initialTheme = applyTheme(initialSun ? 'light' : readTheme())
 
 // The tabs, and with them the claim about what this app is. Everything here
 // is a place you can be; everything not here — a job, a task, the notes on
@@ -63,6 +65,7 @@ const INFO_TITLES = {
 // scroll restoration, take the dependency.
 export default function App() {
   const [theme, setTheme] = useState(initialTheme)
+  const [sun, setSun] = useState(initialSun)
   const [staff, setStaff] = useState(readStaff)
   // Chosen before the name, and only asked once — it is stored with the
   // identity, so switching who you are also lets you switch which question
@@ -174,7 +177,16 @@ export default function App() {
   }, [])
 
   function toggleTheme() {
-    setTheme(applyTheme(theme === 'dark' ? 'light' : 'dark'))
+    const next = theme === 'dark' ? 'light' : 'dark'
+    // Going dark leaves sun mode: the two cannot both be true.
+    if (next === 'dark' && sun) setSun(applySun(false))
+    setTheme(applyTheme(next))
+  }
+
+  function toggleSun() {
+    const next = !sun
+    setSun(applySun(next))
+    if (next && theme === 'dark') setTheme(applyTheme('light'))
   }
 
   function pickStaff(person) {
@@ -714,6 +726,17 @@ export default function App() {
                 site or in a ceiling space, needs to be reachable from
                 wherever you already are, not two taps away behind a tab
                 whose whole point is settings you visit rarely. */}
+            {/* Sun mode: bigger, bolder, black on white, for a phone held up
+                in direct sun. Its own switch, because it is a different
+                question from light/dark — "can I read this on the roof". */}
+            <button
+              onClick={toggleSun}
+              aria-pressed={sun}
+              aria-label={sun ? 'Turn sun mode off' : 'Turn sun mode on: bigger, bolder, black on white'}
+              className={`tap flex h-9 w-9 items-center justify-center rounded-full ${sun ? 'bg-accent text-accent-ink' : 'text-ink-2'}`}
+            >
+              <SunMedium size={18} aria-hidden="true" />
+            </button>
             <button
               onClick={toggleTheme}
               aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}

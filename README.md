@@ -60,6 +60,12 @@ historical records still have something to show.
 - **Light theme by default, and it does not follow the OS.** A dark UI in
   direct sun is unreadable. Dark is available as an explicit choice for
   ceiling spaces and night work.
+- **Sun mode** (the sun button in the top bar, remembered on the phone) is
+  the step beyond the light theme for a screen held up in direct sun: one
+  step bigger and bolder type, black on white, 2px borders instead of
+  shadows, 64px tap targets. It is `data-sun="1"` on `<html>` and only
+  overrides tokens, so components never know about it. It always sits on the
+  light theme.
 - **Minimum 56px tap targets, list rows 72–96px.** 44pt assumes a bare
   fingertip; a glove spreads the contact patch and shifts its centre.
 - **No drag gestures, no hover, no `title=` tooltips.** On touch a `title` is

@@ -36,3 +36,22 @@ export function applyTheme(theme) {
   }
   return theme
 }
+
+// Sun mode: everything one step bigger and bolder, pure black on white, borders
+// instead of shadows (a shadow is the first thing direct sun erases). It is
+// its own switch, remembered on the phone, and it implies the light theme —
+// a dark screen cannot be made readable in sun by making it bolder.
+const SUN_KEY = 'cdefield.sun'
+
+export function readSun() {
+  try { return localStorage.getItem(SUN_KEY) === '1' } catch { return false }
+}
+
+export function applySun(on) {
+  if (on) document.documentElement.setAttribute('data-sun', '1')
+  else document.documentElement.removeAttribute('data-sun')
+  try { localStorage.setItem(SUN_KEY, on ? '1' : '0') } catch { /* won't persist; still applied now */ }
+  const bar = getComputedStyle(document.documentElement).getPropertyValue('--surface-1').trim()
+  if (bar) document.querySelector('meta[name="theme-color"]')?.setAttribute('content', bar)
+  return on
+}
