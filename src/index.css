@@ -947,48 +947,29 @@ body {
   flex-direction: column;
   justify-content: space-between;
   padding: 20px;
-  background: #13211a;
+  background: #000;
   overflow: hidden;
 }
-/* The collage: three across, two down, a hairline between tiles. */
-.picker-hero__grid {
+/* The crew photo: full width, centred, black either side of it top and
+   bottom, the top and bottom faded into the black so the words land on it. */
+.picker-hero__photo {
   position: absolute;
   inset: 0;
   z-index: 0;
-  display: grid;
-  grid-template-columns: 3fr 2fr 2fr;
-  grid-template-rows: 1fr 1fr;
-  gap: 0;
-  filter: saturate(0.8) brightness(0.72) contrast(1.05);
-}
-.picker-hero__grid > div {
-  background: #1a2a21 center / cover no-repeat;
-}
-/* The crew photo stands tall on the left; a green wash over the lot ties six
-   photos into one picture. */
-.picker-hero__grid > div:first-child {
-  grid-row: 1 / span 2;
-}
-.picker-hero__wash {
-  position: absolute;
-  inset: 0;
-  z-index: 1;
-  background: #0f5c2d;
-  mix-blend-mode: multiply;
-  opacity: 0.35;
+  background: #000 center / cover no-repeat;
 }
 .picker-hero::before {
   content: '';
   position: absolute;
   inset: 0;
   z-index: 1;
-  background: linear-gradient(180deg, rgba(11, 21, 16, 0.66) 0%, rgba(11, 21, 16, 0.12) 38%, rgba(11, 21, 16, 0.15) 60%, rgba(11, 21, 16, 0.88) 100%);
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.92) 0%, rgba(0, 0, 0, 0.45) 18%, rgba(0, 0, 0, 0) 36%, rgba(0, 0, 0, 0) 62%, rgba(0, 0, 0, 0.5) 82%, rgba(0, 0, 0, 0.94) 100%);
 }
 .picker-hero > * {
   position: relative;
   z-index: 2;
 }
-.picker-hero > .picker-hero__grid {
+.picker-hero > .picker-hero__photo {
   position: absolute;
   z-index: 0;
 }
@@ -1052,7 +1033,11 @@ body {
   }
   .picker-hero {
     padding: 36px 40px;
-    background-position: center;
+  }
+  /* The left half is taller than the photo at full width: black above and
+     below it, as on the dashboard's sign-in. */
+  .picker-hero__photo {
+    background-size: 100% auto;
   }
   .picker-hero__line {
     font-size: var(--text-xl);

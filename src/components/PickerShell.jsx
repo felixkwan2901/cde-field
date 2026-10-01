@@ -8,31 +8,18 @@ import Brand from './Brand'
 // what this is, and a solid panel with the thing to do. On a phone the photo
 // is a band across the top; on a laptop it is the left half.
 //
-// One photo, not a tiled wall: six dimmed thumbnails read as wallpaper, and
-// the seams between them were the first thing the eye found. Hotlinked as a
-// CSS background so that if cdelectrical.co.nz is slow or down the panel's
-// own dark fill shows and nothing is broken.
-// Six of Cassidy-Davies' own jobs (cdelectrical.co.nz/projects), tiled across
-// the photo side — the collage the owner preferred, inside the split layout.
-// Hotlinked as CSS backgrounds: a slow or unreachable marketing site shows a
-// dark tile, never a broken-image icon.
-const PROJECT_PHOTOS = [
-  'https://www.cdelectrical.co.nz/wp-content/uploads/2025/08/1.png',
-  'https://www.cdelectrical.co.nz/wp-content/uploads/2024/12/IMG_6354-1536x1152.jpg',
-  'https://www.cdelectrical.co.nz/wp-content/uploads/2024/12/AquaPro-1536x1104.jpg',
-  'https://www.cdelectrical.co.nz/wp-content/uploads/2024/11/uploads1715202201060-6bgnn2aulol-c76a6241ef84e850120e165b75daabcb1-360-Montreal-Street-21-scaled-1-1536x1025.jpg',
-  'https://www.cdelectrical.co.nz/wp-content/uploads/2024/12/IMG_5047-1536x1092.jpg',
-  'https://www.cdelectrical.co.nz/wp-content/uploads/2025/04/Stairs.png',
-]
+// The crew in front of the workshop — the photo the company uses as its
+// banner, the full 1920px file so it is sharp. Full width in the middle of
+// the photo side with black above and below, the top and bottom faded into
+// it, exactly as the dashboard's sign-in has it. A CSS background, so a slow
+// or unreachable marketing site shows black, never a broken-image icon.
+const CREW_PHOTO = 'https://www.cdelectrical.co.nz/wp-content/uploads/2025/08/Team-Shot.jpg'
 
 export default function PickerShell({ eyebrow = 'Field app', pitch, children }) {
   return (
     <div className="app-frame nav-fade picker-scene">
       <aside className="picker-hero" aria-hidden="true">
-        <div className="picker-hero__grid">
-          {PROJECT_PHOTOS.map((url) => <div key={url} style={{ backgroundImage: `url('${url}')` }} />)}
-        </div>
-        <div className="picker-hero__wash" />
+        <div className="picker-hero__photo" style={{ backgroundImage: `url('${CREW_PHOTO}')` }} />
         <div className="picker-hero__brand safe-top">
           <Brand size={44} />
           <span className="min-w-0">
