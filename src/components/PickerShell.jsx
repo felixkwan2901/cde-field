@@ -1,5 +1,6 @@
 import { CheckCircle2, MapPin, Send } from 'lucide-react'
 import Brand from './Brand'
+import hero from '../assets/hero-koawa.jpg'
 
 // The frame around the two screens nobody has identified themselves on yet
 // (RoleScreen, StaffPickerScreen) — the same page the dashboard's sign-in
@@ -12,13 +13,15 @@ import Brand from './Brand'
 // the seams between them were the first thing the eye found. Hotlinked as a
 // CSS background so that if cdelectrical.co.nz is slow or down the panel's
 // own dark fill shows and nothing is broken.
-// The photo itself is set in index.css (.picker-hero), where the phone gets the
-// smaller file and the laptop the full-size one.
+// Two of the crew on the Kōawa Studios job (University of Canterbury), from
+// cdelectrical.co.nz/projects — people doing the work, not a finished house.
+// Bundled (172 KB JPEG) rather than hotlinked, so a phone never waits on the
+// marketing site for its own opening screen.
 
 export default function PickerShell({ eyebrow = 'Field app', pitch, children }) {
   return (
     <div className="app-frame nav-fade picker-scene">
-      <aside className="picker-hero" aria-hidden="true">
+      <aside className="picker-hero" style={{ backgroundImage: `url(${hero})` }} aria-hidden="true">
         <div className="picker-hero__brand safe-top">
           <Brand size={44} />
           <span className="min-w-0">

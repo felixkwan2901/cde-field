@@ -923,10 +923,9 @@ body {
   flex-direction: column;
   justify-content: space-between;
   padding: 20px;
-  /* Cassidy-Davies' own work (cdelectrical.co.nz/projects). The 1536px copy
-     for a phone's band; the laptop rule below swaps in the 2560px original.
-     A failed load shows the dark fill, never a broken-image icon. */
-  background: #13211a url('https://www.cdelectrical.co.nz/wp-content/uploads/2024/12/IMG_6354-1536x1152.jpg') center 45% / cover no-repeat;
+  /* The photo comes from PickerShell (a bundled asset); this is the fill
+     behind it and how it sits. */
+  background: #13211a center 35% / cover no-repeat;
 }
 .picker-hero::before {
   content: '';
@@ -997,7 +996,6 @@ body {
   }
   .picker-hero {
     padding: 36px 40px;
-    background-image: url('https://www.cdelectrical.co.nz/wp-content/uploads/2024/12/IMG_6354-scaled.jpg');
     background-position: center;
   }
   .picker-hero__line {
