@@ -32,6 +32,7 @@ export default function PickerShell({ eyebrow = 'Field app', pitch, children }) 
         <div className="picker-hero__grid">
           {PROJECT_PHOTOS.map((url) => <div key={url} style={{ backgroundImage: `url('${url}')` }} />)}
         </div>
+        <div className="picker-hero__wash" />
         <div className="picker-hero__brand safe-top">
           <Brand size={44} />
           <span className="min-w-0">
